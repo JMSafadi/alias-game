@@ -1,85 +1,173 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Alias game
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Content
+1. [Description](#description)
+2. [Technical requirements](#technical-requirements)
+3. [Base URL](#base-url)
+4. [Install](#install)
 
 ## Description
+Alias is a word-guessing game where players form teams. Each team takes turns where one member describes a word and others guess it. The game includes a chat for players to communicate and a system to check for similar words.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Technical requirements
 
-## Project setup
+## Base URL
 
-```bash
-$ npm install
+
+## API Documentation
+### 1. Endpoint /auth
+#### `POST` - `/auth`
+Register new player in game with name and password. Mandatory step to play.
+
+Request:
+```
+curl -X 'POST'
+'/auth'
+-d
+{
+  "username": "John Doe",
+  "password": "password123"
+}
+
+```
+Response:
+```
+{
+  "message": "Registered user"
+}
 ```
 
-## Compile and run the project
+### 2. Endpoint /lobby
 
-```bash
-# development
-$ npm run start
 
-# watch mode
-$ npm run start:dev
+### 3. Endpoint /game
+Route that handles the core logic of the game. Including match initiation, turn managment, and player interactions.
+##### `POST` - `/game/start` 
+- Init a new game when lobby is full.
 
-# production mode
-$ npm run start:prod
+Request:
+```
+curl -X 'POST'
+'/game/start'
+-d
+{
+  "lobbyId": "123",
+  "teams": [
+    {
+      "teamName": "Team A",
+      "players": ["user1", "user2"]
+    },
+    {
+      "teamName": "Team B",
+      "players": ["user3", "user4"]
+    }
+  ]
+}
+```
+Response:
+```
+{
+  "gameId": "789",
+  "message": "Game started!"
+}
 ```
 
-## Run tests
+##### `POST` - `/game/turn/start`
+- Init turn for one team. Generates the word to guess and turn time.
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+Request: 
+```
+curl -X 'POST'
+'/game/turn/start'
+-d
+{
+  "gameId": "789",
+  "teamId": "teamA"
+}
 ```
 
-## Resources
+Response:
+```
+{
+  "word": "rabbit",
+  "timeRemaining:" 60
+}
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+##### `POST` - `/game/turn/guess`
+- Send guess attempt
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Request: 
+```
+curl -X 'POST'
+'/game/turn/guess'
+-d
+{
+  "gameId": "789",
+  "teamId": "teamA",
+  "guess": "rabbit"
+}
+```
 
-## Support
+Response:
+```
+{
+  "correct": "false",
+}
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+##### `POST` - `/game/turn/pass`
+- Jumps to next turn if team guess word or if time has run out.
 
-## Stay in touch
+Request:
+```
+curl -X 'POST'
+'/game/turn/pass'
+-d
+{
+  "gameId": "789",
+  "teamId": "teamA",
+  "reason": "time"
+}
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Response:
+```
+{
+  "message": "Time expired due to timeout."
+}
+```
 
-## License
+##### `POST` - `/game/end`
+- End game and show results.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Request:
+```
+curl -X 'POST'
+'/game/end'
+-d
+{
+  "gameId": "789"
+}
+```
+
+Response
+```
+{
+  "finalScores": {
+    "teamA": 5,
+    "teamB": 3
+  },
+  "message": "Game finished. Team A wins!"
+}
+```
+
+
+
+### 4. Endpoint /chat
+
+
+### 5. Endpoint /words
+
+
+
