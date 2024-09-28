@@ -165,9 +165,89 @@ Response
 
 
 ### 4. Endpoint /chat
+Route that handles all chat functionalities within the game, allowing players to send messages and retrieve chat history in real-time.
 
+#### `POST` - `/chat/send`
+- Sends a message in the game lobby.
+
+**Request:**
+```bash
+curl -X 'POST' '/chat/send' -d {
+  "lobbyId": "123",
+  "username": "John Doe",
+  "message": "Let's start the game!"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Message sent successfully",
+  "timestamp": "2024-09-27T15:00:00Z"
+}
+```
+
+#### `GET` - `/chat`
+- Retrieves the chat history for a specific lobby.
+
+**Request:**
+```bash
+curl -X 'GET' '/chat?lobbyId=123'
+```
+
+**Response:**
+```json
+{
+  "messages": [
+    {
+      "username": "John Doe",
+      "message": "Let's start the game!",
+      "timestamp": "2024-09-27T15:00:00Z"
+    },
+    {
+      "username": "Jane Doe",
+      "message": "Ready to play!",
+      "timestamp": "2024-09-27T15:01:00Z"
+    }
+  ]
+}
+```
 
 ### 5. Endpoint /words
+Route that manages word validation and retrieves similar words to enhance gameplay and prevent obvious clues.
+
+#### `POST` - `/words/validate`
+- Validates if the guessed word is correct.
+
+**Request:**
+```bash
+curl -X 'POST' '/words/validate' -d {
+  "word": "rabbit"
+}
+```
+
+**Response:**
+```json
+{
+  "valid": true,
+  "message": "The word is valid."
+}
+```
+
+#### `GET` - `/words/similar`
+- Retrieves a list of similar words that cannot be used by describers.
+
+**Request:**
+```bash
+curl -X 'GET' '/words/similar?word=rabbit'
+```
+
+**Response:**
+```json
+{
+  "similarWords": ["bunny", "hare", "lagomorph"]
+}
+```
 
 
 
