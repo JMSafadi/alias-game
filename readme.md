@@ -38,7 +38,112 @@ Response:
 ```
 
 ### 2. Endpoint /lobby
+Route that manages game rooms, allowing players to create and join rooms, and facilitating team selection. This ensures that players are appropriately grouped before the game starts.
 
+### 2.1 Endpoint: `/lobby/create`
+#### `POST` - Create a new game lobby
+
+Allows a user to create a new game lobby. The creator becomes the lobby owner and can manage settings such as the number of players and teams.
+
+Request:
+```bash
+curl -X 'POST' '/lobby/create' \
+-H 'Content-Type: application/json' \
+-d '{
+  "username": "JohnDoe",
+  "maxPlayers": 6,
+  "teamCount": 2
+}'
+```
+
+Response:
+```
+{
+  "lobbyId": "123",
+  "owner": "JohnDoe",
+  "maxPlayers": 6,
+  "teamCount": 2,
+  "message": "Lobby created successfully."
+}
+```
+
+### 2.2 Endpoint: `/lobby/join`
+#### `POST` - Join an existing game lobby
+Allows a player to join a specified lobby, given that the lobby 
+isn't full.
+
+Request:
+```bash
+curl -X 'POST' '/lobby/join' \
+-H 'Content-Type: application/json' \
+-d '{
+  "username": "JaneDoe",
+  "lobbyId": "123"
+}'
+```
+
+Response:
+```
+{
+  "lobbyId": "123",
+  "username": "JaneDoe",
+  "message": "Successfully joined the lobby."
+}
+```
+
+Error Responses:
+
+```
+404 Lobby Not Found: The specified lobby does not exist.
+400 Lobby Full: The lobby has reached its player capacity.
+```
+### 2.3 Endpoint: `/lobby/teams`
+#### `POST` - Assign players to teams
+Assigns players to teams in the lobby before the game starts.
+
+Request:
+```bash
+curl -X 'POST' '/lobby/teams' \
+-H 'Content-Type: application/json' \
+-d '{
+  "lobbyId": "123",
+  "teams": [
+    {
+      "teamName": "Team A",
+      "players": ["JohnDoe", "JaneDoe"]
+    },
+    {
+      "teamName": "Team B",
+      "players": ["Player3", "Player4"]
+    }
+  ]
+}'
+```
+
+Response:
+```
+{
+  "lobbyId": "123",
+  "teams": [
+    {
+      "teamName": "Team A",
+      "players": ["JohnDoe", "JaneDoe"]
+    },
+    {
+      "teamName": "Team B",
+      "players": ["Player3", "Player4"]
+    }
+  ],
+  "message": "Teams assigned successfully."
+}
+```
+
+Error Responses:
+```
+404 Lobby Not Found: The specified lobby does not exist.
+400 Invalid Team Assignment: Some players are missing or already
+assigned.
+```
 
 ### 3. Endpoint /game
 Route that handles the core logic of the game. Including match initiation, turn managment, and player interactions.
