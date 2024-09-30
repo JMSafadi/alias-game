@@ -5,10 +5,11 @@ module.exports = {
     tsconfigRootDir: __dirname,
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint/eslint-plugin'],
+  plugins: ['@typescript-eslint/eslint-plugin', 'jest'],
   extends: [
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
+    'plugin:jest/recommended',
   ],
   root: true,
   env: {
@@ -17,9 +18,14 @@ module.exports = {
   },
   ignorePatterns: ['.eslintrc.js'],
   rules: {
-    '@typescript-eslint/interface-name-prefix': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/explicit-function-return-type': 'warn',
+    '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
+    'no-unused-vars': 'warn',
+    quotes: ['error', 'single'],
+    semi: ['error', 'always'],
+    'jest/consistent-test-it': ['error', { fn: 'it' }],
+    'jest/no-focused-tests': 'error',
+    'no-eval': 'error',
   },
 };

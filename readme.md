@@ -1,85 +1,358 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Alias game
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Content
+1. [Description](#description)
+2. [Technical requirements](#technical-requirements)
+3. [Base URL](#base-url)
+4. [Install](#install)
 
 ## Description
+Alias is a word-guessing game where players form teams. Each team takes turns where one member describes a word and others guess it. The game includes a chat for players to communicate and a system to check for similar words.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Technical requirements
 
-## Project setup
+## Base URL
 
-```bash
-$ npm install
+
+## API Documentation
+### 1. Endpoint /auth
+#### `POST` - `/auth`
+Register new player in game with name and password. Mandatory step to play.
+
+Request:
+```
+curl -X 'POST'
+'/auth'
+-d
+{
+  "username": "John Doe",
+  "password": "password123"
+}
+
+```
+Response:
+```
+{
+  "message": "Registered user"
+}
 ```
 
-## Compile and run the project
+### 2. Endpoint /lobby
+Route that manages game rooms, allowing players to create and join rooms, and facilitating team selection. This ensures that players are appropriately grouped before the game starts.
 
+### 2.1 Endpoint: `/lobby/create`
+#### `POST` - Create a new game lobby
+
+Allows a user to create a new game lobby. The creator becomes the lobby owner and can manage settings such as the number of players and teams.
+
+Request:
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+curl -X 'POST' '/lobby/create' \
+-H 'Content-Type: application/json' \
+-d '{
+  "username": "JohnDoe",
+  "maxPlayers": 6,
+  "teamCount": 2
+}'
 ```
 
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+Response:
+```
+{
+  "lobbyId": "123",
+  "owner": "JohnDoe",
+  "maxPlayers": 6,
+  "teamCount": 2,
+  "message": "Lobby created successfully."
+}
 ```
 
-## Resources
+### 2.2 Endpoint: `/lobby/join`
+#### `POST` - Join an existing game lobby
+Allows a player to join a specified lobby, given that the lobby 
+isn't full.
 
-Check out a few resources that may come in handy when working with NestJS:
+Request:
+```bash
+curl -X 'POST' '/lobby/join' \
+-H 'Content-Type: application/json' \
+-d '{
+  "username": "JaneDoe",
+  "lobbyId": "123"
+}'
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Response:
+```
+{
+  "lobbyId": "123",
+  "username": "JaneDoe",
+  "message": "Successfully joined the lobby."
+}
+```
 
-## Support
+Error Responses:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```
+404 Lobby Not Found: The specified lobby does not exist.
+400 Lobby Full: The lobby has reached its player capacity.
+```
+### 2.3 Endpoint: `/lobby/teams`
+#### `POST` - Assign players to teams
+Assigns players to teams in the lobby before the game starts.
 
-## Stay in touch
+Request:
+```bash
+curl -X 'POST' '/lobby/teams' \
+-H 'Content-Type: application/json' \
+-d '{
+  "lobbyId": "123",
+  "teams": [
+    {
+      "teamName": "Team A",
+      "players": ["JohnDoe", "JaneDoe"]
+    },
+    {
+      "teamName": "Team B",
+      "players": ["Player3", "Player4"]
+    }
+  ]
+}'
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Response:
+```
+{
+  "lobbyId": "123",
+  "teams": [
+    {
+      "teamName": "Team A",
+      "players": ["JohnDoe", "JaneDoe"]
+    },
+    {
+      "teamName": "Team B",
+      "players": ["Player3", "Player4"]
+    }
+  ],
+  "message": "Teams assigned successfully."
+}
+```
 
-## License
+Error Responses:
+```
+404 Lobby Not Found: The specified lobby does not exist.
+400 Invalid Team Assignment: Some players are missing or already
+assigned.
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### 3. Endpoint /game
+Route that handles the core logic of the game. Including match initiation, turn managment, and player interactions.
+##### `POST` - `/game/start` 
+- Init a new game when lobby is full.
+
+Request:
+```
+curl -X 'POST'
+'/game/start'
+-d
+{
+  "lobbyId": "123",
+  "teams": [
+    {
+      "teamName": "Team A",
+      "players": ["user1", "user2"]
+    },
+    {
+      "teamName": "Team B",
+      "players": ["user3", "user4"]
+    }
+  ]
+}
+```
+Response:
+```
+{
+  "gameId": "789",
+  "message": "Game started!"
+}
+```
+
+##### `POST` - `/game/turn/start`
+- Init turn for one team. Generates the word to guess and turn time.
+
+Request: 
+```
+curl -X 'POST'
+'/game/turn/start'
+-d
+{
+  "gameId": "789",
+  "teamId": "teamA"
+}
+```
+
+Response:
+```
+{
+  "word": "rabbit",
+  "timeRemaining:" 60
+}
+```
+
+##### `POST` - `/game/turn/guess`
+- Send guess attempt
+
+Request: 
+```
+curl -X 'POST'
+'/game/turn/guess'
+-d
+{
+  "gameId": "789",
+  "teamId": "teamA",
+  "guess": "rabbit"
+}
+```
+
+Response:
+```
+{
+  "correct": "false",
+}
+```
+
+##### `POST` - `/game/turn/pass`
+- Jumps to next turn if team guess word or if time has run out.
+
+Request:
+```
+curl -X 'POST'
+'/game/turn/pass'
+-d
+{
+  "gameId": "789",
+  "teamId": "teamA",
+  "reason": "time"
+}
+```
+
+Response:
+```
+{
+  "message": "Time expired due to timeout."
+}
+```
+
+##### `POST` - `/game/end`
+- End game and show results.
+
+Request:
+```
+curl -X 'POST'
+'/game/end'
+-d
+{
+  "gameId": "789"
+}
+```
+
+Response
+```
+{
+  "finalScores": {
+    "teamA": 5,
+    "teamB": 3
+  },
+  "message": "Game finished. Team A wins!"
+}
+```
+
+
+
+### 4. Endpoint /chat
+Route that handles all chat functionalities within the game, allowing players to send messages and retrieve chat history in real-time.
+
+#### `POST` - `/chat/send`
+- Sends a message in the game lobby.
+
+**Request:**
+```bash
+curl -X 'POST' '/chat/send' -d {
+  "lobbyId": "123",
+  "username": "John Doe",
+  "message": "Let's start the game!"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Message sent successfully",
+  "timestamp": "2024-09-27T15:00:00Z"
+}
+```
+
+#### `GET` - `/chat`
+- Retrieves the chat history for a specific lobby.
+
+**Request:**
+```bash
+curl -X 'GET' '/chat?lobbyId=123'
+```
+
+**Response:**
+```json
+{
+  "messages": [
+    {
+      "username": "John Doe",
+      "message": "Let's start the game!",
+      "timestamp": "2024-09-27T15:00:00Z"
+    },
+    {
+      "username": "Jane Doe",
+      "message": "Ready to play!",
+      "timestamp": "2024-09-27T15:01:00Z"
+    }
+  ]
+}
+```
+
+### 5. Endpoint /words
+Route that manages word validation and retrieves similar words to enhance gameplay and prevent obvious clues.
+
+#### `POST` - `/words/validate`
+- Validates if the guessed word is correct.
+
+**Request:**
+```bash
+curl -X 'POST' '/words/validate' -d {
+  "word": "rabbit"
+}
+```
+
+**Response:**
+```json
+{
+  "valid": true,
+  "message": "The word is valid."
+}
+```
+
+#### `GET` - `/words/similar`
+- Retrieves a list of similar words that cannot be used by describers.
+
+**Request:**
+```bash
+curl -X 'GET' '/words/similar?word=rabbit'
+```
+
+**Response:**
+```json
+{
+  "similarWords": ["bunny", "hare", "lagomorph"]
+}
+```
+
+
+

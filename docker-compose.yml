@@ -1,0 +1,36 @@
+services:
+  alias-game-app:
+    build: .
+    container_name: alias-game-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_INITDB_DATABASE}?authSource=admin
+    depends_on:
+      - mongo
+    networks:
+      - alias-game-network
+
+  mongo:
+    image: mongo:latest
+    container_name: alias-game-mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - alias-game-network
+
+networks:
+  alias-game-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
