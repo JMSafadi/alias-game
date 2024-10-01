@@ -166,7 +166,10 @@ curl -X 'POST'
       "teamName": "Team B",
       "players": ["user3", "user4"]
     }
-  ]
+  ],
+  "rounds": 5,
+  "timePerTurn": 60
+  "createdAt": "2011-10-10T14:48:00"
 }
 ```
 Response:
