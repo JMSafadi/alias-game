@@ -157,7 +157,7 @@ curl -X 'POST'
 -d
 {
   "lobbyId": "123",
-  "teams": [
+  "teamsInfo": [
     {
       "teamName": "Team A",
       "players": ["user1", "user2"]
@@ -168,8 +168,8 @@ curl -X 'POST'
     }
   ],
   "rounds": 5,
-  "timePerTurn": 60
-  "createdAt": "2011-10-10T14:48:00"
+  "timePerTurn": 60,
+  "createdAt": "2024-10-01T15:29:40.495Z"
 }
 ```
 Response:
@@ -190,7 +190,7 @@ curl -X 'POST'
 -d
 {
   "gameId": "789",
-  "teamId": "teamA"
+  "teamName": "Team A"
 }
 ```
 
