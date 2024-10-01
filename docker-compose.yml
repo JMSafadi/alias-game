@@ -9,6 +9,9 @@ services:
       - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/${MONGO_INITDB_DATABASE}?authSource=admin
     depends_on:
       - mongo
+    volumes:
+      - ./src:/app/src
+    command: npm run start:dev
     networks:
       - alias-game-network
 
