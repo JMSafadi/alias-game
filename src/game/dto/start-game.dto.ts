@@ -1,11 +1,13 @@
 import { Type } from "class-transformer"
-import { ArrayMinSize, IsArray, IsInt, IsString, Max, Min, ValidateNested } from "class-validator";
+import { ArrayMinSize, IsArray, IsInt, IsNotEmpty, IsString, Max, Min, ValidateNested } from "class-validator";
 
 class TeamsDto {
   @IsString()
+  @IsNotEmpty()
   teamName: string
 
   @IsArray()
+  @IsNotEmpty()
   players: string[]
 }
 

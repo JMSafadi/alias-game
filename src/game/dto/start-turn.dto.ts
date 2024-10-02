@@ -4,7 +4,7 @@ export class StartTurnDto {
   @IsNotEmpty()
   gameId: string
 
-  @IsNotEmpty()
+  @IsString()
   @IsNotEmpty()
   teamName: string
 }
