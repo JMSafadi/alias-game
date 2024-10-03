@@ -1,6 +1,5 @@
 import { IsNotEmpty, IsString } from 'class-validator';
-
-export class StartTurnDto {
+export class GuessWordDto {
   @IsString()
   @IsNotEmpty()
   gameId: string
@@ -8,4 +7,8 @@ export class StartTurnDto {
   @IsString()
   @IsNotEmpty()
   teamName: string
+
+  @IsString()
+  @IsNotEmpty()
+  guessWord: string
 }
