@@ -1,33 +1,42 @@
-import { Type } from "class-transformer"
-import { ArrayMinSize, IsArray, IsInt, IsNotEmpty, IsString, Max, Min, ValidateNested } from "class-validator";
+import { Type } from 'class-transformer';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  Max,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 class TeamsDto {
   @IsString()
   @IsNotEmpty()
-  teamName: string
+  teamName: string;
 
   @IsArray()
   @IsNotEmpty()
-  players: string[]
+  players: string[];
 }
 
 export class StartGameDto {
   @IsString()
-  lobbyId: string
+  lobbyId: string;
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TeamsDto)
   @ArrayMinSize(2)
-  teamsInfo: TeamsDto[]
+  teamsInfo: TeamsDto[];
 
   @IsInt()
   @Min(5)
   @Max(10)
-  rounds: number
+  rounds: number;
 
   @IsInt()
   @Min(30)
   @Max(120)
-  timePerTurn: number
+  timePerTurn: number;
 }

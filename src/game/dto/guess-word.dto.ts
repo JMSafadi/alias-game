@@ -2,13 +2,13 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class GuessWordDto {
   @IsString()
   @IsNotEmpty()
-  gameId: string
+  gameId: string;
 
   @IsString()
   @IsNotEmpty()
-  teamName: string
+  teamName: string;
 
   @IsString()
   @IsNotEmpty()
-  guessWord: string
+  guessWord: string;
 }
