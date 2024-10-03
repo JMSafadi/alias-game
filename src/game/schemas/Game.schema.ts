@@ -34,17 +34,21 @@ export class Game extends Document {
   @Prop({ type: [Teams], required: true })
   teamsInfo: Teams[];
 
-  @Prop({ required: true, min: 5, max: 10 })
+  // update mins
+  @Prop({ required: true, min: 1, max: 10 })
   rounds: number;
 
-  @Prop({ required: true, min: 30, max: 120 })
+  @Prop({ required: true, min: 1, max: 120 })
   timePerTurn: number;
 
   @Prop({ type: TurnSchema })
   currentTurn: Turn;
 
-  @Prop({ default: 1 })
+  @Prop({ default: 0 })
   currentRound: number;
+
+  @Prop({ default: 0 })
+  playingTurn: number;
 
   @Prop({ default: Date.now })
   createdAt: Date;

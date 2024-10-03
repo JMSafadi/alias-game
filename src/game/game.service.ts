@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { StartTurnDto } from './dto/start-turn.dto';
 import { StartGameDto } from './dto/start-game.dto';
@@ -18,12 +19,12 @@ const words = require('./words/words.json');
 @Injectable()
 export class GameService {
   constructor(@InjectModel(Game.name) private gameModel: Model<Game>) {}
-
   async startGame(startGameDto: StartGameDto) {
     try {
       // Create a new game instances using DTO
       const newGame = new this.gameModel(startGameDto);
       // Save in database
+      // console.log(newGame);
       return newGame.save();
     } catch (err) {
       throw new Error('Failted to start game: ' + err.message);
@@ -33,11 +34,17 @@ export class GameService {
     try {
       // Find game
       const game = await this.gameModel.findById(startTurnDto.gameId);
-
       if (!game) {
         throw new NotFoundException('Game not found');
       }
-      // Update turn state
+      // Update first round
+      if (game.currentRound === 0 && game.playingTurn === 0) {
+        game.currentRound++;
+        game.playingTurn++;
+      }
+      // console.log('playing turn::', game.playingTurn);
+      // console.log('current round:', game.currentRound);
+      // Update curren turn state and generate word
       game.currentTurn = {
         teamName: startTurnDto.teamName,
         wordToGuess: this.generateWord(),
@@ -68,9 +75,21 @@ export class GameService {
       if (!game) {
         throw new Error('Game not found');
       }
-      if (game.currentRound > game.rounds) {
-        throw new Error('Game over: All rounds completed');
+      // End  game
+      if (
+        game.currentRound === game.rounds &&
+        game.playingTurn === game.teamsInfo.length
+      ) {
+        return { gameOver: true, game };
       }
+      game.playingTurn++;
+      // Updated current turn and round
+      if (game.playingTurn > game.teamsInfo.length) {
+        game.playingTurn = 1;
+        game.currentRound++;
+      }
+      // console.log('playing turn::', game.playingTurn);
+      // console.log('current round:', game.currentRound);
       // Get next team to change turn
       const nextTeam = this.getNextTeam(game);
       // Set next turn
@@ -79,11 +98,9 @@ export class GameService {
         wordToGuess: this.generateWord(),
         isTurnActive: true,
       };
-      // Next round
-      game.currentRound += 1;
       console.log('Next turn: ', game);
       await game.save();
-      return game;
+      return { gameOver: false, game };
     } catch (err) {
       throw new Error('Can not jump next turn' + err.message);
     }

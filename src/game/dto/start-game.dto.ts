@@ -30,13 +30,14 @@ export class StartGameDto {
   @ArrayMinSize(2)
   teamsInfo: TeamsDto[];
 
+  // Update min
   @IsInt()
-  @Min(5)
+  @Min(1)
   @Max(10)
   rounds: number;
 
   @IsInt()
-  @Min(30)
+  @Min(1)
   @Max(120)
   timePerTurn: number;
 }

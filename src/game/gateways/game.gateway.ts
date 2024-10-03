@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
@@ -38,7 +39,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const game = await this.gameService.startGame(startGameDto);
     this.server.emit('gameStarted', { message: 'Game started!', game });
-    // Init new game state
+    // Init new game state with first turn
     const updatedGame = await this.gameService.startTurn({
       gameId: game._id.toString(),
       teamName: game.teamsInfo[0].teamName,
@@ -67,6 +68,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (this.activeTimers.has(gameId)) {
       clearTimeout(this.activeTimers.get(gameId));
     }
+    // Log remaining seconds
+    let remainingTime = timePerTurn;
+    const interval = setInterval(() => {
+      console.log(`Time remaining: ${remainingTime} seconds`);
+      remainingTime--;
+      if (remainingTime < 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
     const timer = setTimeout(async () => {
       console.log(`Turn ended by timeout for team: ${teamName}`);
 
@@ -76,13 +87,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         turn,
       });
 
-      const nextTurn = await this.gameService.startNextTurn(gameId);
-      this.server.emit('turnStarted', nextTurn);
-      this.startTurnTimer(
-        gameId,
-        nextTurn.currentTurn.teamName,
-        nextTurn.timePerTurn,
-      );
+      const { gameOver, game: nextTurn } = await this.gameService.startNextTurn(gameId);
+      if (gameOver) {
+        console.log('Game ended!!');
+        this.server.emit('gameEnded', {
+          message: 'Game Over: All rounds completed!',
+          finalScores: 100,
+        });
+      } else {
+        this.server.emit('turnStarted', nextTurn.currentTurn);
+        this.startTurnTimer(
+          gameId,
+          nextTurn.currentTurn.teamName,
+          nextTurn.timePerTurn,
+        );
+      }
+      clearInterval(interval);
     }, timePerTurn * 1000);
     this.activeTimers.set(gameId, timer);
   }
@@ -110,8 +130,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.emit('turnStarted', nextTurn);
       this.startTurnTimer(
         gameId,
-        nextTurn.currentTurn.teamName,
-        nextTurn.timePerTurn,
+        nextTurn.game.currentTurn.teamName,
+        nextTurn.game.timePerTurn,
       );
     } else {
       // If incorrect word, send notify
