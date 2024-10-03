@@ -22,10 +22,12 @@ class Teams {
   @Prop({ type: [String], required: true })
   players: string[]
 
+  @Prop({ default: 0 })
+  score: number
 }
 
 @Schema()
-export class Game extends Document{
+export class Game extends Document {
   @Prop({ required: true })
   lobbyId: string;
 
@@ -40,6 +42,9 @@ export class Game extends Document{
 
   @Prop({ type: TurnSchema })
   currentTurn: Turn
+
+  @Prop({ default: 1 })
+  currentRound: number
 
   @Prop({ default: Date.now })
   createdAt: Date
