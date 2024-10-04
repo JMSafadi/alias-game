@@ -21,11 +21,9 @@ export class GameService {
   constructor(@InjectModel(Game.name) private gameModel: Model<Game>) {}
   async startGame(startGameDto: StartGameDto) {
     try {
-      console.log('dto: ', startGameDto);
       // Create a new game instances using DTO
       const newGame = new this.gameModel(startGameDto);
       // Save in database
-      console.log('before save: ', newGame.teamsInfo);
       return newGame.save();
     } catch (err) {
       throw new Error('Failted to start game: ' + err.message);
