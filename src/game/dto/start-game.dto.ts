@@ -33,12 +33,12 @@ export class StartGameDto {
 
   // Update min
   @IsInt()
-  @Min(1)
+  @Min(5)
   @Max(10)
   rounds: number;
 
   @IsInt()
-  @Min(1)
+  @Min(30)
   @Max(120)
   timePerTurn: number;
 }

@@ -67,19 +67,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     if (this.activeTimers.has(gameId)) {
       clearTimeout(this.activeTimers.get(gameId));
+      this.activeTimers.delete(gameId);
     }
-    // Log remaining seconds
+
     let remainingTime = timePerTurn;
-    const interval = setInterval(() => {
-      console.log(`Time remaining: ${remainingTime} seconds`);
-      remainingTime--;
-      if (remainingTime < 0) {
-        clearInterval(interval);
-      }
-    }, 1000);
+    console.log(`Remaining time: ${remainingTime}`);
 
     const timer = setTimeout(async () => {
-      console.log(`Turn ended by timeout for team: ${teamName}`);
+      console.log(`Turn ended by timeout for team: ${teamName}. Total time taken: ${timePerTurn}`);
 
       const turn = await this.gameService.endTurn(gameId);
       this.server.emit('turnEnded', {
@@ -95,6 +90,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           finalScores: 100,
         });
       } else {
+        remainingTime = nextTurn.timePerTurn;
         this.server.emit('turnStarted', nextTurn.currentTurn);
         this.startTurnTimer(
           gameId,
@@ -102,7 +98,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           nextTurn.timePerTurn,
         );
       }
-      clearInterval(interval);
     }, timePerTurn * 1000);
     this.activeTimers.set(gameId, timer);
   }
@@ -120,6 +115,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
     // If correct, end turn
     if (result.correct) {
+      // Emit score for team that guess word
+      this.server.emit('scoreUpdated', {
+        message: `Team ${teamName} scored points!`,
+        teamName,
+        score: result.score,
+      });
+
       const turnEnded = await this.gameService.endTurn(gameId);
       this.server.emit('turnEnded', {
         message: 'Correct word guessed! Turn ended',

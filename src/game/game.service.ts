@@ -49,6 +49,8 @@ export class GameService {
         wordToGuess: this.generateWord(),
         isTurnActive: true,
       };
+      // Save turn init time to calculate score
+      game.currentTurnStartTime = Date.now();
       await game.save();
       return game;
     } catch (err) {
@@ -81,14 +83,14 @@ export class GameService {
       ) {
         return { gameOver: true, game };
       }
+      // Restar turn time to calculate score
+      game.currentTurnStartTime = Date.now();
       game.playingTurn++;
       // Updated current turn and round
       if (game.playingTurn > game.teamsInfo.length) {
         game.playingTurn = 1;
         game.currentRound++;
       }
-      // console.log('playing turn::', game.playingTurn);
-      // console.log('current round:', game.currentRound);
       // Get next team to change turn
       const nextTeam = this.getNextTeam(game);
       // Set next turn
@@ -137,17 +139,24 @@ export class GameService {
       const isCorrect =
         game.currentTurn.wordToGuess.toLowerCase() === guessWord.toLowerCase();
       console.log(`Word ${guessWord} is ${isCorrect}`);
+
       if (isCorrect) {
-        // Add point to team
-        // const teamIndex = game.teamsInfo.findIndex(
-        //   (team) => team.teamName === teamName,
-        // );
-        // if (teamIndex !== -1) {
-        //   game.teamsInfo[teamIndex].score += 1;
-        // }
+        // Calculate score by time remaining
+        const currentTime = Date.now();
+        const elapsedTime = (currentTime - game.currentTurnStartTime) / 1000;
+        const remainingTime = Math.max(0, game.timePerTurn - elapsedTime);
+        // Find team, add score and save
+        const team = game.teamsInfo.find((team) => team.teamName === teamName);
+        if (team) {
+          team.score += remainingTime;
+          await game.save();
+        }
+        game.currentTurn.isTurnActive = false;
         await game.save();
+        return { correct: true, score: team.score };
+      } else {
+        return { correct: false };
       }
-      return { correct: isCorrect };
     } catch (err) {
       throw new Error('Failed to check word guess: ' + err.message);
     }
