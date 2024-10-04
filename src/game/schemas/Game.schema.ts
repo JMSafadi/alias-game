@@ -15,6 +15,7 @@ export class Turn {
 
 export const TurnSchema = SchemaFactory.createForClass(Turn);
 
+@Schema()
 class Teams {
   @Prop({ required: true })
   teamName: string;
@@ -22,19 +23,20 @@ class Teams {
   @Prop({ type: [String], required: true })
   players: string[];
 
-  @Prop({ default: 0 })
+  @Prop({ default: 0, required: true })
   score: number;
 }
+
+export const TeamSchema = SchemaFactory.createForClass(Teams);
 
 @Schema()
 export class Game extends Document {
   @Prop({ required: true })
   lobbyId: string;
 
-  @Prop({ type: [Teams], required: true })
+  @Prop({ type: [TeamSchema], required: true, _id: false })
   teamsInfo: Teams[];
 
-  // update mins
   @Prop({ required: true, min: 1, max: 10 })
   rounds: number;
 

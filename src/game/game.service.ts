@@ -21,10 +21,11 @@ export class GameService {
   constructor(@InjectModel(Game.name) private gameModel: Model<Game>) {}
   async startGame(startGameDto: StartGameDto) {
     try {
+      console.log('dto: ', startGameDto);
       // Create a new game instances using DTO
       const newGame = new this.gameModel(startGameDto);
       // Save in database
-      // console.log(newGame);
+      console.log('before save: ', newGame.teamsInfo);
       return newGame.save();
     } catch (err) {
       throw new Error('Failted to start game: ' + err.message);
@@ -42,8 +43,6 @@ export class GameService {
         game.currentRound++;
         game.playingTurn++;
       }
-      // console.log('playing turn::', game.playingTurn);
-      // console.log('current round:', game.currentRound);
       // Update curren turn state and generate word
       game.currentTurn = {
         teamName: startTurnDto.teamName,
@@ -140,12 +139,12 @@ export class GameService {
       console.log(`Word ${guessWord} is ${isCorrect}`);
       if (isCorrect) {
         // Add point to team
-        const teamIndex = game.teamsInfo.findIndex(
-          (team) => team.teamName === teamName,
-        );
-        if (teamIndex !== -1) {
-          game.teamsInfo[teamIndex].score += 1;
-        }
+        // const teamIndex = game.teamsInfo.findIndex(
+        //   (team) => team.teamName === teamName,
+        // );
+        // if (teamIndex !== -1) {
+        //   game.teamsInfo[teamIndex].score += 1;
+        // }
         await game.save();
       }
       return { correct: isCorrect };

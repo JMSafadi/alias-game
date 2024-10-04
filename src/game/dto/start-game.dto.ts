@@ -28,6 +28,7 @@ export class StartGameDto {
   @ValidateNested({ each: true })
   @Type(() => TeamsDto)
   @ArrayMinSize(2)
+  @IsNotEmpty()
   teamsInfo: TeamsDto[];
 
   // Update min
