@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { GameService } from "./game.service";
+import { GameService } from "./services/game.service";
 import { getModelToken } from "@nestjs/mongoose";
 import { Game } from "./schemas/game.schema";
 import { Model } from "mongoose";
