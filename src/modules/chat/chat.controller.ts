@@ -1,27 +1,31 @@
 import {
   Controller,
   Get,
-  UseGuards,
-  Req,
+  // UseGuards,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { Request } from 'express';
+// import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Message } from './schemas/message.schema';
 
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  @UseGuards(JwtAuthGuard)
+  /**
+   * Retrieves the chat history for the current room.
+   *
+   * @returns A promise that resolves to an array of chat messages.
+   * @throws HttpException - Throws an exception if retrieving the chat history fails.
+   */
+  // @UseGuards(JwtAuthGuard)
   @Get('history')
-  async getChatHistory(@Req() req: Request): Promise<Message[]> {
+  async getChatHistory(): Promise<Message[]> {
     try {
       const chatHistory = await this.chatService.getMessages();
       return chatHistory;
-    } catch (error) {
+    } catch {
       throw new HttpException(
         'Failed to retrieve chat history',
         HttpStatus.INTERNAL_SERVER_ERROR,
