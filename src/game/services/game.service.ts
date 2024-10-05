@@ -18,51 +18,43 @@ export class GameService {
     private readonly scoreService: ScoreService,
   ) {}
   async startGame(startGameDto: StartGameDto) {
-    try {
-      // Create a new game instances using DTO
-      const newGame = new this.gameModel(startGameDto);
-      // Save in database
-      return newGame.save();
-    } catch (err) {
-      throw new Error('Failted to start game: ' + err.message);
-    }
+    // Create a new game instances using DTO
+    const newGame = new this.gameModel(startGameDto);
+    // Save in database
+    return await newGame.save();
   }
   async checkWordGuess(gameId: string, teamName: string, guessWord: string) {
-    try {
-      const game = await this.gameModel.findById(gameId);
-      if (!game) {
-        throw new NotFoundException('Game not found');
-      }
-      // Verify if correct team turn
-      if (game.currentTurn.teamName !== teamName) {
-        throw new ForbiddenException('Not your team turn!');
-      }
-      // Verify is guess word is correct
-      console.log(game.currentTurn.wordToGuess.toLowerCase());
-      const isCorrect =
-        game.currentTurn.wordToGuess.toLowerCase() === guessWord.toLowerCase();
-      console.log(`Word ${guessWord} is ${isCorrect}`);
+    const game = await this.gameModel.findById(gameId);
+    if (!game) {
+      throw new NotFoundException('Game not found');
+    }
+    // Verify if correct team turn
+    if (game.currentTurn.teamName !== teamName) {
+      throw new ForbiddenException('Not your team turn!');
+    }
+    // Verify is guess word is correct
+    console.log(game.currentTurn.wordToGuess.toLowerCase());
+    const isCorrect =
+      game.currentTurn.wordToGuess.toLowerCase() === guessWord.toLowerCase();
+    console.log(`Word ${guessWord} is ${isCorrect}`);
 
-      if (isCorrect) {
-        // Calculate score by time remaining
-        const currentTime = Date.now();
-        const elapsedTime = (currentTime - game.currentTurnStartTime) / 1000;
-        // Calculate score with remaining time
-        const score = this.scoreService.calculateScore(game, elapsedTime);
-        // Find team, add score, save new state and return
-        this.scoreService.updateTeamScore(game, teamName, score);
-        game.currentTurn.isTurnActive = false;
-        await game.save();
-        return { correct: true, score };
-      } else {
-        // Subtract 5 points if incorret guess
-        this.scoreService.updateTeamScore(game, teamName, -5);
-        game.currentTurn.isTurnActive = false;
-        await game.save();
-        return { correct: false };
-      }
-    } catch (err) {
-      throw new Error('Failed to check word guess: ' + err.message);
+    if (isCorrect) {
+      // Calculate score by time remaining
+      const currentTime = Date.now();
+      const elapsedTime = (currentTime - game.currentTurnStartTime) / 1000;
+      // Calculate score with remaining time
+      const score = this.scoreService.calculateScore(game, elapsedTime);
+      // Find team, add score, save new state and return
+      this.scoreService.updateTeamScore(game, teamName, score);
+      game.currentTurn.isTurnActive = false;
+      await game.save();
+      return { correct: true, score };
+    } else {
+      // Subtract 5 points if incorret guess
+      this.scoreService.updateTeamScore(game, teamName, -5);
+      game.currentTurn.isTurnActive = false;
+      await game.save();
+      return { correct: false };
     }
   }
 }
