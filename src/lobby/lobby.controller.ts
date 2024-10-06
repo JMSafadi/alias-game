@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Delete, Param } from '@nestjs/common';
 import { LobbyService } from './lobby.service';
 import { CreateLobbyDto } from './dto/CreateLobby.dto';
 import { JoinLobbyDto } from './dto/JoinLobby.dto';
@@ -14,7 +14,7 @@ export class LobbyController {
         return this.lobbyService.getAllLobbies();
     }
 
-    //Route to fetch a specific lobby by ID.
+    //Route to fetch a specific lobby by id.
     @Get(':id')
     async getLobbyById(@Param('id') lobbyId: string) {
         return this.lobbyService.getLobbyById(lobbyId);
@@ -37,4 +37,11 @@ export class LobbyController {
     assignTeams(@Body() assignTeamsDto: AssignTeamsDto) {
         return this.lobbyService.assignTeams(assignTeamsDto);
     }
+
+    //Route to delete a lobby by id.
+    @Delete(':id')
+    async deleteLobby(@Param('id') lobbyId: string) {
+        return this.lobbyService.deleteLobbyById(lobbyId);
+    }
+
 }

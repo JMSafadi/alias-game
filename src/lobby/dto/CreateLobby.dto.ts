@@ -1,15 +1,12 @@
-import { IsNotEmpty, IsString, IsInt, Min } from 'class-validator';
+import { IsNotEmpty, IsString, IsInt, Min, Max } from 'class-validator';
 
 export class CreateLobbyDto {
     @IsNotEmpty()
     @IsString()
-    username: string;
+    userId: string;
 
     @IsInt()
-    @Min(2)
-    maxPlayers: number;
-
-    @IsInt()
-    @Min(2)
-    teamCount: number;
+    @Min(2, { message: 'The minimum number of players is 2' })
+    @Max(5, { message: 'The maximum number of players is 5' })
+    playersPerTeam: number;
 }
