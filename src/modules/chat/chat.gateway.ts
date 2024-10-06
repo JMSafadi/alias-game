@@ -19,7 +19,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * The server instance for managing WebSocket communications.
    */
   @WebSocketServer()
-  private server: Server;
+  public server: Server;
 
   /**
    * Called after the gateway has been initialized.
@@ -61,6 +61,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Check if messageBody is already an object or a JSON string
       if (typeof messageBody === 'string') {
         sendMessageDto = JSON.parse(messageBody);
+        if (sendMessageDto.timestamp) {
+          sendMessageDto.timestamp = new Date(sendMessageDto.timestamp);
+        }
       } else {
         sendMessageDto = messageBody;
       }
