@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
@@ -33,6 +35,20 @@ import { AppService } from './app.service';
      * ChatModule provides functionality for managing chat features, such as real-time messaging between users.
      */
     ChatModule,
+
+    /**
+     * ServeStaticModule is used to serve static files from the `public` directory.
+     * In this configuration, the module serves the file `alias-game.html` as the default entry point.
+     * This is useful for providing an HTML client that can be accessed directly in the browser.
+     * The static files are served from the `/` root path of the application.
+     */
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      serveRoot: '/',
+      serveStaticOptions: {
+        index: 'alias-game.html',
+      },
+    }),
   ],
   controllers: [
     /**

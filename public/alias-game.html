@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alias Game Chat</title>
+    <script
+      src="https://cdn.socket.io/4.3.2/socket.io.min.js"
+      integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      // Połączenie z przestrzenią nazw 'chat' - główny czat
+      const chatSocket = io('http://localhost:3000/chat');
+
+      chatSocket.on('connect', function () {
+        console.log('Connected to ChatGateway');
+      });
+
+      chatSocket.on('receive_message', function (data) {
+        console.log('Received message:', data);
+        const mainMessagesDiv = document.getElementById('mainMessages');
+        const newMessage = document.createElement('div');
+        newMessage.textContent = `${data.sender}: ${data.content}`;
+        mainMessagesDiv.appendChild(newMessage);
+      });
+
+      function sendMainMessage() {
+        const messageInput = document.getElementById('mainMessageInput');
+        const message = messageInput.value;
+
+        // Emit the message to the main chat
+        chatSocket.emit(
+          'send_message',
+          JSON.stringify({
+            content: message,
+          })
+        );
+
+        messageInput.value = '';
+      }
+
+      // Połączenie z przestrzenią nazw 'game' - czat dotyczący zgadywania haseł
+      const gameSocket = io('http://localhost:3000');
+
+      gameSocket.on('connect', function () {
+        console.log('Connected to GameGateway');
+      });
+
+      gameSocket.on('gameStarted', function (data) {
+        console.log(data.message);
+        updateGameInfo(data.game);
+      });
+
+      gameSocket.on('turnStarted', function (data) {
+        console.log(data.message);
+        const gameMessagesDiv = document.getElementById('gameMessages');
+        const newMessage = document.createElement('div');
+        newMessage.style.fontWeight = 'bold';
+        newMessage.textContent = `New Turn: ${data.wordToGuess}`;
+        gameMessagesDiv.appendChild(newMessage);
+      });
+
+      gameSocket.on('turnEnded', function (data) {
+        console.log(data.message);
+      });
+
+      gameSocket.on('guessFailed', function (data) {
+        const gameMessagesDiv = document.getElementById('gameMessages');
+        const newMessage = document.createElement('div');
+        newMessage.style.color = 'red';
+        newMessage.textContent = data.message;
+        gameMessagesDiv.appendChild(newMessage);
+      });
+
+      gameSocket.on('scoreUpdated', function (data) {
+        console.log('Score Updated:', data);
+        updateTeamScore(data.teamName, data.score);
+      });
+
+      function sendGameMessage() {
+        const messageInput = document.getElementById('gameMessageInput');
+        const guessWord = messageInput.value;
+
+        // Emit guess to game gateway
+        gameSocket.emit(
+          'guessWord',
+          JSON.stringify({
+            gameId: 'exampleGameId', // Replace with actual gameId
+            teamName: 'Team A', // Replace with actual team name
+            guessWord: guessWord,
+          })
+        );
+
+        messageInput.value = '';
+      }
+
+      function updateGameInfo(game) {
+        const teamsInfoDiv = document.getElementById('teamsInfo');
+        teamsInfoDiv.innerHTML = ''; // Wyczyść poprzednie dane
+
+        game.teamsInfo.forEach((team) => {
+          const teamDiv = document.createElement('div');
+          teamDiv.textContent = `Team: ${team.teamName}, Score: ${team.score}`;
+          teamsInfoDiv.appendChild(teamDiv);
+        });
+      }
+
+      function updateTeamScore(teamName, score) {
+        const teamsInfoDiv = document.getElementById('teamsInfo');
+        const teamDivs = teamsInfoDiv.children;
+
+        for (let i = 0; i < teamDivs.length; i++) {
+          if (teamDivs[i].textContent.includes(`Team: ${teamName}`)) {
+            teamDivs[i].textContent = `Team: ${teamName}, Score: ${score}`;
+          }
+        }
+      }
+    </script>
+    <style>
+      #mainContainer {
+        display: flex;
+        flex-direction: row;
+      }
+      #chatContainer {
+        flex: 3;
+      }
+      #sidebar {
+        flex: 1;
+        border-left: 1px solid #ccc;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="mainContainer">
+      <div id="chatContainer">
+        <div id="mainChat">
+          <h2>Main Chat</h2>
+          <div id="mainMessages" style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;">
+            <!-- Main chat messages will be displayed here -->
+          </div>
+          <input id="mainMessageInput" placeholder="Enter main chat message">
+          <button onclick="sendMainMessage()">Send to Main Chat</button>
+        </div>
+
+        <div id="gameChat" style="margin-top: 20px;">
+          <h2>Game Chat</h2>
+          <div id="gameMessages" style="height: 150px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;">
+            <!-- Game chat messages related to guessing will be displayed here -->
+          </div>
+          <input id="gameMessageInput" placeholder="Enter guess">
+          <button onclick="sendGameMessage()">Send Guess</button>
+        </div>
+      </div>
+
+      <div id="sidebar">
+        <h2>Game Info</h2>
+        <div id="teamsInfo">
+          <!-- Team information and scores will be displayed here -->
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
