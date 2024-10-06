@@ -1,12 +1,11 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateUserDto {
-  @IsNotEmpty()
+export class StartTurnDto {
   @IsString()
-  username: string;
+  @IsNotEmpty()
+  gameId: string;
 
-  @IsNotEmpty()
   @IsString()
-  password: string;
+  @IsNotEmpty()
+  teamName: string;
 }
-
