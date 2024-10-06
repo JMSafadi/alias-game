@@ -9,6 +9,9 @@ export class Turn {
   @Prop({ required: true })
   wordToGuess: string;
 
+  @Prop({ required: true })
+  describer: string;
+
   @Prop({ default: false })
   isTurnActive: boolean;
 }

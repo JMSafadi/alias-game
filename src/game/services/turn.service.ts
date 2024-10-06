@@ -22,15 +22,23 @@ export class TurnService {
     if (!game) {
       throw new NotFoundException('Game not found');
     }
+    // Find team playing
+    const currentTeam = game.teamsInfo.find(team => team.teamName === startTurnDto.teamName);
+    if (!currentTeam) {
+      throw new NotFoundException('Team not found');
+    }
+    // Assign describer role randomly
+    const describer = this.assignDescriber(currentTeam.players);
     // Update first round
     if (game.currentRound === 0 && game.playingTurn === 0) {
       game.currentRound++;
       game.playingTurn++;
     }
-    // Update curren turn state and generate word
+    // Update current turn state and generate word
     game.currentTurn = {
       teamName: startTurnDto.teamName,
       wordToGuess: this.wordService.generateWord(),
+      describer,
       isTurnActive: true,
     };
     // Save turn init time to calculate score
@@ -43,6 +51,7 @@ export class TurnService {
     if (!game) {
       throw new NotFoundException('Game not found');
     }
+    // Updated and save new turn state
     game.currentTurn.isTurnActive = false;
     await game.save();
     return game;
@@ -52,7 +61,7 @@ export class TurnService {
     if (!game) {
       throw new NotFoundException('Game not found');
     }
-    // End  game
+    // Verify and end game
     if (
       game.currentRound === game.rounds &&
       game.playingTurn === game.teamsInfo.length
@@ -69,14 +78,25 @@ export class TurnService {
     }
     // Get next team to change turn
     const nextTeam = this.teamService.getNextTeam(game);
+    // Find team playing
+    const currentTeam = game.teamsInfo.find(team => team.teamName === nextTeam);
+    if (!currentTeam) {
+      throw new NotFoundException('Team not found');
+    }
+    const describer = this.assignDescriber(currentTeam.players);
     // Set next turn
     game.currentTurn = {
       teamName: nextTeam,
       wordToGuess: this.wordService.generateWord(),
+      describer,
       isTurnActive: true,
     };
     console.log('Next turn: ', game);
     await game.save();
     return { gameOver: false, game };
+  }
+  private assignDescriber(players: string[]): string {
+    const randomIndex = Math.floor(Math.random() * players.length);
+    return players[randomIndex];
   }
 }
