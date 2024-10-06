@@ -1,26 +1,67 @@
 # Alias game
+### Node.js-Based Game "Alias" with Chat and Word Checking
 
-## Content
-1. [Description](#description)
-2. [Technical requirements](#technical-requirements)
-3. [Base URL](#base-url)
-4. [Install](#install)
 
-## Description
+## Game description
 Alias is a word-guessing game where players form teams. Each team takes turns where one member describes a word and others guess it. The game includes a chat for players to communicate and a system to check for similar words.
 
-## Technical requirements
+### Objective
+Teams try to guess as many words as possible from their teammates' descriptions.
+
+### Turns
+Each turn is timed. Describers cannot use the word or its derivatives.
+
+### Scoring
+Points are awarded for each correct guess. Similar words are checked for validation.
+
+### End Game
+The game concludes after a predetermined number of rounds, with the highest-scoring team winning.
+
+## Content
+1. [System Requirements](#system-requirements)
+2. [Base URL](#base-url)
+3. [Install](#install)
+4. [Set Up Enviroment](#set-up-enviroment)
+5. [API Documentation](#api-documentation)
+7. [Socket events](#socket-events)
+8. [Database Schema](#database-schema)
+9. [Security](#security)
+9. [Deployment](#deployment)
+10. [Future enhancements](#future-enhancements)
+
+## System Requirements
+- **Backend**: Node.js
+- **Database**: MongoDB
 
 ## Base URL
 
+## Install
+
+## Setting Up Environment Variables  
+
+1. **Copy the Example File:**  
+
+To create your own environment configuration, start by copying the example `.env.example` file to a new file named `.env` in the root directory of the project.
+
+2. **Edit the '.env' file:**  
+
+Open the newly created `.env` file in a text editor and replace the placeholder values with your actual MongoDB credentials.
+
+3. **Run the Application:**  
+
+Once you have set your environment variables, you can start the application with Docker.
+
+## Note  
+
+Make sure to keep your `.env` file private and not share it in version control. The `.env` file is listed in `.gitignore`  to prevent it from being tracked by Git.
 
 ## API Documentation
 ### 1. Endpoint /auth
 #### `POST` - `/auth`
 Register new player in game with name and password. Mandatory step to play.
 
-Request:
-```
+**Request:**
+```bash
 curl -X 'POST'
 '/auth'
 -d
@@ -30,8 +71,8 @@ curl -X 'POST'
 }
 
 ```
-Response:
-```
+**Response:**
+```json
 {
   "message": "Registered user"
 }
@@ -45,7 +86,7 @@ Route that manages game rooms, allowing players to create and join rooms, and fa
 
 Allows a user to create a new game lobby. The creator becomes the lobby owner and can manage settings such as the number of players and teams.
 
-Request:
+**Request:**
 ```bash
 curl -X 'POST' '/lobby/create' \
 -H 'Content-Type: application/json' \
@@ -56,8 +97,8 @@ curl -X 'POST' '/lobby/create' \
 }'
 ```
 
-Response:
-```
+**Response:**
+```json
 {
   "lobbyId": "123",
   "owner": "JohnDoe",
@@ -72,7 +113,7 @@ Response:
 Allows a player to join a specified lobby, given that the lobby 
 isn't full.
 
-Request:
+**Request:**
 ```bash
 curl -X 'POST' '/lobby/join' \
 -H 'Content-Type: application/json' \
@@ -82,8 +123,8 @@ curl -X 'POST' '/lobby/join' \
 }'
 ```
 
-Response:
-```
+**Response:**
+```json
 {
   "lobbyId": "123",
   "username": "JaneDoe",
@@ -120,8 +161,8 @@ curl -X 'POST' '/lobby/teams' \
 }'
 ```
 
-Response:
-```
+**Response:**
+```json
 {
   "lobbyId": "123",
   "teams": [
@@ -144,133 +185,6 @@ Error Responses:
 400 Invalid Team Assignment: Some players are missing or already
 assigned.
 ```
-
-### 3. Endpoint /game
-Route that handles the core logic of the game. Including match initiation, turn managment, and player interactions.
-##### `POST` - `/game/start` 
-- Init a new game when lobby is full.
-
-Request:
-```
-curl -X 'POST'
-'/game/start'
--d
-{
-  "lobbyId": "123",
-  "teamsInfo": [
-    {
-      "teamName": "Team A",
-      "players": ["user1", "user2"]
-    },
-    {
-      "teamName": "Team B",
-      "players": ["user3", "user4"]
-    }
-  ],
-  "rounds": 5,
-  "timePerTurn": 60,
-  "createdAt": "2024-10-01T15:29:40.495Z"
-}
-```
-Response:
-```
-{
-  "gameId": "789",
-  "message": "Game started!"
-}
-```
-
-##### `POST` - `/game/turn/start`
-- Init turn for one team. Generates the word to guess and turn time.
-
-Request: 
-```
-curl -X 'POST'
-'/game/turn/start'
--d
-{
-  "gameId": "789",
-  "teamName": "Team A"
-}
-```
-
-Response:
-```
-{
-  "word": "rabbit",
-  "timeRemaining:" 60
-}
-```
-
-##### `POST` - `/game/turn/guess`
-- Send guess attempt
-
-Request: 
-```
-curl -X 'POST'
-'/game/turn/guess'
--d
-{
-  "gameId": "789",
-  "teamId": "teamA",
-  "guess": "rabbit"
-}
-```
-
-Response:
-```
-{
-  "correct": "false",
-}
-```
-
-##### `POST` - `/game/turn/pass`
-- Jumps to next turn if team guess word or if time has run out.
-
-Request:
-```
-curl -X 'POST'
-'/game/turn/pass'
--d
-{
-  "gameId": "789",
-  "teamId": "teamA",
-  "reason": "time"
-}
-```
-
-Response:
-```
-{
-  "message": "Time expired due to timeout."
-}
-```
-
-##### `POST` - `/game/end`
-- End game and show results.
-
-Request:
-```
-curl -X 'POST'
-'/game/end'
--d
-{
-  "gameId": "789"
-}
-```
-
-Response
-```
-{
-  "finalScores": {
-    "teamA": 5,
-    "teamB": 3
-  },
-  "message": "Game finished. Team A wins!"
-}
-```
-
-
 
 ### 4. Endpoint /chat
 Route that handles all chat functionalities within the game, allowing players to send messages and retrieve chat history in real-time.
@@ -357,23 +271,143 @@ curl -X 'GET' '/words/similar?word=rabbit'
 }
 ```
 
+## Socket Events
+``startGame``  
+Client sent event to start the game once teams and players have veen set up in a lobby.  
+  
+**Payload**
+```json
+{
+  "teamsInfo": [
+      {
+        "teamName": "Team A",
+        "players": [
+            "user1",
+            "user2"
+        ]
+      },
+      {
+        "teamName": "Team B",
+        "players": [
+            "user3",
+            "user4"
+        ]
+      }
+  ],
+  "rounds": 5,
+  "timePerTurn": 30
+}
 
+```
+  
+`gameStarted `  
 
+When start-game event is sent, server response with event game-started to init game.
+  
+```json
+{
+  "message": "Game started!",
+  "game": {
+    "lobbyId": "123",
+    "teamsInfo": [
+      {
+        "teamName": "Team A",
+        "players": [
+          "user1",
+          "user2"
+        ],
+        "score": 0
+      },
+      {
+        "teamName": "Team B",
+        "players": [
+          "user3",
+          "user4"
+        ],
+        "score": 0
+      }
+    ],
+    "rounds": 5,
+    "timePerTurn": 30
+  }
+}
+```
 
-### Setting Up Environment Variables  
+`turnStarted`  
+When game starts, automatically init the first turn for one team generating word to guess.  
+  
+```json
+{
+  "message": "Turn started for team: Team A",
+  "wordToGuess": "garden"
+}
+```  
 
-1. **Copy the Example File:**  
+`guessWord`  
+Client sent event when the team playing the turn, try to guess the word.  
+  
+**Payload:**
+```json
+{
+  "gameId": "6701c9c2392f862da89aa423",
+  "teamName": "Team A",
+  "guessWord": "sofa"
+}
+```  
+  
+If guess is incorrect:
 
-To create your own environment configuration, start by copying the example `.env.example` file to a new file named `.env` in the root directory of the project.
+`guessFailed`  
+  
+```json
+{
+  "message": "Incorrect word! Team lost 5 points. Try again."
+}
+```  
+If guess is correct:  
 
-2. **Edit the '.env' file:**  
+`turnEnded`  
 
-Open the newly created `.env` file in a text editor and replace the placeholder values with your actual MongoDB credentials.
+```json
+{
+  "message": "Correct word guessed! Turn ended",
+}
+```
+`scoreUpdated`  
 
-3. **Run the Application:**  
+```json
+{
+  "message": "Team Team A scored points!",
+  "teamName": "Team A",
+  "score": 12
+}
+```
+`gameEnded`  
 
-Once you have set your environment variables, you can start the application with Docker.
+```json
+{
+  "message": "Game over! The winner is Team B. Congratulations!",
+  "score": 12
+}
+```
 
-## Note  
+## Database Schema
+### Game model
+| Field                | Type       | Description                                                |
+| :--------------------| :----------| :----------------------------------------------------------|
+| `_id`                  |   `ObjectId` | Unique ID generated automatically,                         |
+| `teamsInfo`            |   `Array`    | Teams information including:<br> -  `teamName`: team name.<br>- `players`: List with players name.<br>- `score`: Total team score.               |
+| `rounds`               |  `Number`    | Total rounds in game,                                      |
+| `timePerTurn`          |  `Number`    | Time (in seconds) assign for each turn.                    |
+| `currentRound`         |  `Number`    | Current playing being played,                              |
+| `playingTurn`          |  `Number`    | Current turn being played. The total, before jumping next round, is equal to the number of teams.       |
+| `createdAt`            |  `Date`      | Game creation date time.                                   |
+| `__v`                  |  `Number`    | Document version (MongoDB internal management)       |
+| `currentTurn`          |  `Object`    | Current turn being played information including:<br>- `teamName`: team name playing.<br>- `wordToGuess`: word to play.<br>- `isTurnActive`: boolean indicating if turn is active.<br>- `_id`: unique turn id generated automatically.       |
+| `currentTurnStartTime` |  `Number`    | Timestamp indicating that turn init. Used to calculate score.       |
 
-Make sure to keep your `.env` file private and not share it in version control. The `.env` file is listed in `.gitignore`  to prevent it from being tracked by Git.
+## Security
+
+## Deployment
+
+## Future Enhancements
