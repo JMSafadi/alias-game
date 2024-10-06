@@ -158,7 +158,9 @@ Error Responses:
 
 ```
 404 User Not Found: User with ID notValidID not found.
-400 User is already in another lobby..
+400 User is already in another lobby.
+400 The minimum number of players is 2.
+400 The maximum number of players is 5.
 ```
 
 ### 2.4 Endpoint: `/lobby/join`
