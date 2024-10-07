@@ -40,54 +40,78 @@ Response:
 ### 2. Endpoint /lobby
 Route that manages game rooms, allowing players to create and join rooms, and facilitating team selection. This ensures that players are appropriately grouped before the game starts.
 
-### 2.1 Endpoint: `/lobby/create`
-#### `POST` - Create a new game lobby
+### 2.1 Endpoint: `/lobby`
+#### `GET` - List all existing lobbies
 
-Allows a user to create a new game lobby. The creator becomes the lobby owner and can manage settings such as the number of players and teams.
+Shows the user all existing lobbies.
 
 Request:
 ```bash
-curl -X 'POST' '/lobby/create' \
--H 'Content-Type: application/json' \
--d '{
-  "username": "JohnDoe",
-  "maxPlayers": 6,
-  "teamCount": 2
-}'
+curl -X 'GET' '/lobby' \
+```
+
+Response:
+```
+    {
+        "lobbyID": "validID",
+        "lobbyOwner": "Player3",
+        "playersPerTeam": 2,
+        "maxPlayers": 4,
+        "currentPlayers": 4,
+        "players": [
+            {
+                "username": "Player3"
+            },
+            {
+                "username": "Player11"
+            },
+            {
+                "username": "Player2"
+            },
+            {
+                "username": "Player5"
+            }
+        ]
+    }
+```
+
+Error Responses:
+
+```
+404 Lobby Not Found: No lobbies found, try creating your own!.
+```
+
+### 2.2 Endpoint: `/lobby/:id`
+#### `GET` - Fetch information about the selected lobby
+
+Shows the user the information of the selected lobby.
+
+Request:
+```bash
+curl -X GET /lobby/:id
 ```
 
 Response:
 ```
 {
-  "lobbyId": "123",
-  "owner": "JohnDoe",
-  "maxPlayers": 6,
-  "teamCount": 2,
-  "message": "Lobby created successfully."
-}
-```
-
-### 2.2 Endpoint: `/lobby/join`
-#### `POST` - Join an existing game lobby
-Allows a player to join a specified lobby, given that the lobby 
-isn't full.
-
-Request:
-```bash
-curl -X 'POST' '/lobby/join' \
--H 'Content-Type: application/json' \
--d '{
-  "username": "JaneDoe",
-  "lobbyId": "123"
-}'
-```
-
-Response:
-```
-{
-  "lobbyId": "123",
-  "username": "JaneDoe",
-  "message": "Successfully joined the lobby."
+    "lobbyOwner": "Player3",
+    "playersPerTeam": 2,
+    "maxPlayers": 4,
+    "currentPlayers": 4,
+    "players": [
+        {
+            "username": "Player3"
+        },
+        {
+            "username": "Player11"
+        },
+        {
+            "username": "Player2"
+        },
+        {
+            "username": "Player5"
+        }
+    ]
 }
 ```
 
@@ -95,9 +119,104 @@ Error Responses:
 
 ```
 404 Lobby Not Found: The specified lobby does not exist.
-400 Lobby Full: The lobby has reached its player capacity.
 ```
-### 2.3 Endpoint: `/lobby/teams`
+
+### 2.3 Endpoint: `/lobby/create`
+#### `POST` - Create a new game lobby
+
+Allows a user to create a new game lobby. The creator becomes the lobby owner and can manage settings such as the number of players and teams.
+
+* Players per team must be between 2 and 5.
+* The lobby will always have 2 teams.
+
+Request:
+```bash
+curl -X 'POST' '/lobby/create' \
+-H 'Content-Type: application/json' \
+-d '{
+  "userId": "validID",
+  "playersPerTeam": 2
+}'
+```
+
+Response:
+```
+{
+    "lobbyOwner": "Player3",
+    "playersPerTeam": 2,
+    "maxPlayers": 4,
+    "currentPlayers": 1,
+    "players": [
+        {
+            "username": "Player3"
+        }
+    ]
+}
+```
+
+Error Responses:
+
+```
+404 User Not Found: User with ID notValidID not found.
+400 User is already in another lobby.
+400 The minimum number of players is 2.
+400 The maximum number of players is 5.
+400 userId must be a string.
+```
+
+### 2.4 Endpoint: `/lobby/join`
+#### `POST` - Join an existing game lobby
+Allows a player to join a specified lobby, given that the lobby isn't full. Players will be added to teams automatically based on
+available spots.
+
+Request:
+```bash
+curl -X 'POST' '/lobby/join' \
+-H 'Content-Type: application/json' \
+-d '{
+  "userId": "validUserID",
+  "lobbyId": "validLobbyID"
+}'
+```
+
+Response:
+```
+{
+    "lobbyID": "validID",
+    "lobbyOwner": "Player3",
+    "playersPerTeam": 2,
+    "maxPlayers": 4,
+    "currentPlayers": 4,
+    "players": [
+        {
+            "username": "Player3"
+        },
+        {
+            "username": "Player11"
+        },
+        {
+            "username": "Player2"
+        },
+        {
+            "username": "Player5"
+        }
+    ]
+}
+```
+
+Error Responses:
+
+```
+404 Lobby Not Found: Lobby with ID notValidID not found.
+400 Lobby Full: The lobby has reached its player capacity.
+400 Lobby Full: User is already in another lobby.
+400 Lobby Full: User is already in the lobby.
+400 userId must be a string.
+400 lobbyId must be a string.
+
+```
+
+### 2.5 Endpoint: `/lobby/teams`
 #### `POST` - Assign players to teams
 Assigns players to teams in the lobby before the game starts.
 
@@ -106,15 +225,15 @@ Request:
 curl -X 'POST' '/lobby/teams' \
 -H 'Content-Type: application/json' \
 -d '{
-  "lobbyId": "123",
+  "lobbyId": "validID",
   "teams": [
     {
-      "teamName": "Team A",
-      "players": ["JohnDoe", "JaneDoe"]
+      "teamName": "Team 1",
+      "players": ["Player1_ID", "Player2_ID"]
     },
     {
-      "teamName": "Team B",
-      "players": ["Player3", "Player4"]
+      "teamName": "Team 2",
+      "players": ["Player3_ID", "Player4_ID"]
     }
   ]
 }'
@@ -123,26 +242,51 @@ curl -X 'POST' '/lobby/teams' \
 Response:
 ```
 {
-  "lobbyId": "123",
+  "lobbyId": "validID",
   "teams": [
     {
-      "teamName": "Team A",
-      "players": ["JohnDoe", "JaneDoe"]
+      "teamName": "Team 1",
+      "players": ["Player1", "Player2"]
     },
     {
-      "teamName": "Team B",
+      "teamName": "Team 2",
       "players": ["Player3", "Player4"]
     }
   ],
-  "message": "Teams assigned successfully."
+  "message": "Teams assigned successfully. The game is about to start!"
 }
 ```
 
 Error Responses:
 ```
-404 Lobby Not Found: The specified lobby does not exist.
-400 Invalid Team Assignment: Some players are missing or already
-assigned.
+404 Lobby Not Found: Invalid lobby ID: notValidID.
+404 Lobby Not Found: Lobby with ID nonExistentID not found.
+400 Invalid Team Assignment: Invalid Team Assignment: Some players are not in the lobby.
+400 Invalid Team Assignment: Incorrect number of players.
+400 lobbyId must be a string.
+400 values in players must be a string.
+```
+
+### 2.6 Endpoint: `/lobby/:id`
+#### `DELETE` - Delete a specific lobby
+Allows the deletion of a specific lobby by its ID.
+
+Request:
+```bash
+curl -X 'DELETE' '/lobby/validID' \
+```
+
+Response:
+```
+{
+  "message": "Lobby with ID validID deleted successfully."
+}
+```
+
+Error Responses:
+```
+404 Lobby Not Found: Lobby with ID notValidID not found.
+400 Invalid Lobby ID: The provided ID is not a valid format.
 ```
 
 ### 3. Endpoint /game
