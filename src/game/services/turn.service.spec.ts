@@ -63,6 +63,10 @@ describe('Turn Service', () => {
       const mockGame = {
         currentRound: 0,
         playingTurn: 0,
+        teamsInfo: [
+          { teamName: 'Team A', players: ['user1', 'user2'], score: 0 },
+          { teamName: 'Team B', players: ['user2', 'user3'], score: 0 },
+        ],
         currentTurn: {
           teamName: 'Team A',
           wordToGuess: 'owl',
@@ -116,7 +120,10 @@ describe('Turn Service', () => {
         currentRound: 1,
         rounds: 3,
         playingTurn: 1,
-        teamsInfo: [{ teamName: 'Team A' }, { teamName: 'Team B' }],
+        teamsInfo: [
+          { teamName: 'Team A', players: ['user1', 'user2'], score: 0 },
+          { teamName: 'Team B', players: ['user2', 'user3'], score: 0 },
+        ],
         currentTurnStartTime: Date.now(),
         save: jest.fn(),
         currentTurn: {
