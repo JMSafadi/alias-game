@@ -17,7 +17,7 @@ import { TurnService } from '../services/turn.service';
 import { GuessWordDto } from '../dto/guess-word.dto';
 import { TimerService } from '../services/timer.service';
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({ namespace: '/game', cors: { origin: '*' }})
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -33,7 +33,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly gameService: GameService,
     private readonly turnService: TurnService,
-    private readonly timerService: TimerService
+    private readonly timerService: TimerService,
   ) {}
   // Event to init game
   @SubscribeMessage('startGame')
@@ -71,19 +71,27 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     this.timerService.startTimer(gameId, timePerTurn, async () => {
       const turn = await this.turnService.endTurn(gameId);
-      this.server.emit('turnEnded', { message: 'Turn ended due to timeout', turn });
+      this.server.emit('turnEnded', {
+        message: 'Turn ended due to timeout',
+        turn,
+      });
 
-      const { gameOver, game: nextTurn } = await this.turnService.startNextTurn(gameId);
+      const { gameOver, game: nextTurn } =
+        await this.turnService.startNextTurn(gameId);
       if (gameOver) {
         const teamsInfo = nextTurn.teamsInfo;
         // Find max score team/s
-        const maxScore = Math.max(...teamsInfo.map(team => team.score));
-        const winningTeams = teamsInfo.filter(team => team.score === maxScore);
+        const maxScore = Math.max(...teamsInfo.map((team) => team.score));
+        const winningTeams = teamsInfo.filter(
+          (team) => team.score === maxScore,
+        );
         let endGameMessage = '';
 
         if (winningTeams.length > 1) {
           // If there is a tie
-          const tieTeamNames = winningTeams.map(team => team.teamName).join(', ');
+          const tieTeamNames = winningTeams
+            .map((team) => team.teamName)
+            .join(', ');
           endGameMessage = `Game over! It's a tie between teams: ${tieTeamNames} with ${maxScore} score.`;
         } else {
           // If a team won
@@ -97,7 +105,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       } else {
         // If game continues, start next turn
         this.server.emit('turnStarted', nextTurn.currentTurn);
-        this.startTurnTimer(gameId, nextTurn.currentTurn.teamName, nextTurn.timePerTurn);
+        this.startTurnTimer(
+          gameId,
+          nextTurn.currentTurn.teamName,
+          nextTurn.timePerTurn,
+        );
       }
     });
   }
@@ -137,7 +149,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
     } else {
       // If incorrect word, send notify
-      this.server.emit('guessFailed', { message: 'Incorrect word! Team lost 5 points. Try again.' });
+      this.server.emit('guessFailed', {
+        message: 'Incorrect word! Team lost 5 points. Try again.',
+      });
     }
   }
 }
