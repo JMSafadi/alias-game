@@ -5,6 +5,7 @@ import { UsersModule } from './users/users.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { LobbyModule } from './lobby/lobby.module';
 
 /**
  * The root module of the application.
