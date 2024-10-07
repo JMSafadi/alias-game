@@ -11,11 +11,12 @@ import { WordService } from './words.service';
 
 @Injectable()
 export class TurnService {
-  constructor(@InjectModel(Game.name) 
-  private gameModel: Model<Game>,
-  private readonly teamService: TeamService,
-  private readonly wordService: WordService
-) {}
+  constructor(
+    @InjectModel(Game.name)
+    private gameModel: Model<Game>,
+    private readonly teamService: TeamService,
+    private readonly wordService: WordService,
+  ) {}
   async startTurn(startTurnDto: StartTurnDto) {
     // Find game
     const game = await this.gameModel.findById(startTurnDto.gameId);
@@ -23,7 +24,9 @@ export class TurnService {
       throw new NotFoundException('Game not found');
     }
     // Find team playing
-    const currentTeam = game.teamsInfo.find(team => team.teamName === startTurnDto.teamName);
+    const currentTeam = game.teamsInfo.find(
+      (team) => team.teamName === startTurnDto.teamName,
+    );
     if (!currentTeam) {
       throw new NotFoundException('Team not found');
     }
@@ -79,7 +82,9 @@ export class TurnService {
     // Get next team to change turn
     const nextTeam = this.teamService.getNextTeam(game);
     // Find team playing
-    const currentTeam = game.teamsInfo.find(team => team.teamName === nextTeam);
+    const currentTeam = game.teamsInfo.find(
+      (team) => team.teamName === nextTeam,
+    );
     if (!currentTeam) {
       throw new NotFoundException('Team not found');
     }
