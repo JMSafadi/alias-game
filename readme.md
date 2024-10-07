@@ -161,6 +161,7 @@ Error Responses:
 400 User is already in another lobby.
 400 The minimum number of players is 2.
 400 The maximum number of players is 5.
+400 userId must be a string.
 ```
 
 ### 2.4 Endpoint: `/lobby/join`
@@ -210,6 +211,9 @@ Error Responses:
 400 Lobby Full: The lobby has reached its player capacity.
 400 Lobby Full: User is already in another lobby.
 400 Lobby Full: User is already in the lobby.
+400 userId must be a string.
+400 lobbyId must be a string.
+
 ```
 
 ### 2.5 Endpoint: `/lobby/teams`
@@ -259,6 +263,8 @@ Error Responses:
 404 Lobby Not Found: Lobby with ID nonExistentID not found.
 400 Invalid Team Assignment: Invalid Team Assignment: Some players are not in the lobby.
 400 Invalid Team Assignment: Incorrect number of players.
+400 lobbyId must be a string.
+400 values in players must be a string.
 ```
 
 ### 2.6 Endpoint: `/lobby/:id`
