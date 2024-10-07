@@ -10,14 +10,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install --silent
 
-# Copy the rest of the application files
+# Copy the rest of the application files (except node_modules)
 COPY . .
-
-# Build the TypeScript code
-RUN npm run build
 
 # Expose the port where the application will run
 EXPOSE 3000
 
-# Default command to run the application in production mode
-CMD ["npm", "run", "start:prod"]
+# Default command for development
+CMD ["npm", "run", "start:dev"]

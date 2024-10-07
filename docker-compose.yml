@@ -10,7 +10,8 @@ services:
     depends_on:
       - mongo
     volumes:
-      - ./src:/app/src
+      - ./src:/usr/src/alias-game/src
+      - /usr/src/alias-game/node_modules
     command: npm run start:dev
     networks:
       - alias-game-network

@@ -81,7 +81,88 @@ curl -X 'POST'
 ### 2. Endpoint /lobby
 Route that manages game rooms, allowing players to create and join rooms, and facilitating team selection. This ensures that players are appropriately grouped before the game starts.
 
-### 2.1 Endpoint: `/lobby/create`
+### 2.1 Endpoint: `/lobby`
+#### `GET` - List all existing lobbies
+
+Shows the user all existing lobbies.
+
+Request:
+```bash
+curl -X 'GET' '/lobby' \
+```
+
+Response:
+```
+    {
+        "lobbyID": "validID",
+        "lobbyOwner": "Player3",
+        "playersPerTeam": 2,
+        "maxPlayers": 4,
+        "currentPlayers": 4,
+        "players": [
+            {
+                "username": "Player3"
+            },
+            {
+                "username": "Player11"
+            },
+            {
+                "username": "Player2"
+            },
+            {
+                "username": "Player5"
+            }
+        ]
+    }
+```
+
+Error Responses:
+
+```
+404 Lobby Not Found: No lobbies found, try creating your own!.
+```
+
+### 2.2 Endpoint: `/lobby/:id`
+#### `GET` - Fetch information about the selected lobby
+
+Shows the user the information of the selected lobby.
+
+Request:
+```bash
+curl -X GET /lobby/:id
+```
+
+Response:
+```
+{
+    "lobbyOwner": "Player3",
+    "playersPerTeam": 2,
+    "maxPlayers": 4,
+    "currentPlayers": 4,
+    "players": [
+        {
+            "username": "Player3"
+        },
+        {
+            "username": "Player11"
+        },
+        {
+            "username": "Player2"
+        },
+        {
+            "username": "Player5"
+        }
+    ]
+}
+```
+
+Error Responses:
+
+```
+404 Lobby Not Found: The specified lobby does not exist.
+```
+
+### 2.3 Endpoint: `/lobby/create`
 #### `POST` - Create a new game lobby
 
 Allows a user to create a new game lobby. The creator becomes the lobby owner and can manage settings such as the number of players and teams.
@@ -91,9 +172,8 @@ Allows a user to create a new game lobby. The creator becomes the lobby owner an
 curl -X 'POST' '/lobby/create' \
 -H 'Content-Type: application/json' \
 -d '{
-  "username": "JohnDoe",
-  "maxPlayers": 6,
-  "teamCount": 2
+  "userId": "validID",
+  "playersPerTeam": 2
 }'
 ```
 
@@ -108,18 +188,18 @@ curl -X 'POST' '/lobby/create' \
 }
 ```
 
-### 2.2 Endpoint: `/lobby/join`
+### 2.4 Endpoint: `/lobby/join`
 #### `POST` - Join an existing game lobby
-Allows a player to join a specified lobby, given that the lobby 
-isn't full.
+Allows a player to join a specified lobby, given that the lobby isn't full. Players will be added to teams automatically based on
+available spots.
 
 **Request:**
 ```bash
 curl -X 'POST' '/lobby/join' \
 -H 'Content-Type: application/json' \
 -d '{
-  "username": "JaneDoe",
-  "lobbyId": "123"
+  "userId": "validUserID",
+  "lobbyId": "validLobbyID"
 }'
 ```
 
@@ -135,10 +215,16 @@ curl -X 'POST' '/lobby/join' \
 Error Responses:
 
 ```
-404 Lobby Not Found: The specified lobby does not exist.
+404 Lobby Not Found: Lobby with ID notValidID not found.
 400 Lobby Full: The lobby has reached its player capacity.
+400 Lobby Full: User is already in another lobby.
+400 Lobby Full: User is already in the lobby.
+400 userId must be a string.
+400 lobbyId must be a string.
+
 ```
-### 2.3 Endpoint: `/lobby/teams`
+
+### 2.5 Endpoint: `/lobby/teams`
 #### `POST` - Assign players to teams
 Assigns players to teams in the lobby before the game starts.
 
@@ -147,15 +233,15 @@ Request:
 curl -X 'POST' '/lobby/teams' \
 -H 'Content-Type: application/json' \
 -d '{
-  "lobbyId": "123",
+  "lobbyId": "validID",
   "teams": [
     {
-      "teamName": "Team A",
-      "players": ["JohnDoe", "JaneDoe"]
+      "teamName": "Team 1",
+      "players": ["Player1_ID", "Player2_ID"]
     },
     {
-      "teamName": "Team B",
-      "players": ["Player3", "Player4"]
+      "teamName": "Team 2",
+      "players": ["Player3_ID", "Player4_ID"]
     }
   ]
 }'
@@ -164,14 +250,14 @@ curl -X 'POST' '/lobby/teams' \
 **Response:**
 ```json
 {
-  "lobbyId": "123",
+  "lobbyId": "validID",
   "teams": [
     {
-      "teamName": "Team A",
-      "players": ["JohnDoe", "JaneDoe"]
+      "teamName": "Team 1",
+      "players": ["Player1", "Player2"]
     },
     {
-      "teamName": "Team B",
+      "teamName": "Team 2",
       "players": ["Player3", "Player4"]
     }
   ],
