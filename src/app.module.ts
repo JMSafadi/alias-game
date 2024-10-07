@@ -14,9 +14,6 @@ import { AppService } from './app.service';
  * This module is responsible for importing and configuring other feature modules, global settings, and core components.
  */
 @Module({
-  imports: [MongooseModule.forRoot(process.env.MONGO_URI), GameModule],
-  controllers: [],
-  providers: [],
   imports: [
     /**
      * Loads environment variables into the application.
@@ -34,6 +31,8 @@ import { AppService } from './app.service';
      * UsersModule provides functionality related to user management, including CRUD operations.
      */
     UsersModule,
+
+    GameModule,
 
     /**
      * ChatModule provides functionality for managing chat features, such as real-time messaging between users.
