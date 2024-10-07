@@ -52,7 +52,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log('Updated game state: ', updatedGame);
 
     this.server.emit('turnStarted', {
-      message: `Turn started for team: ${updatedGame.currentTurn.teamName}`,
+      message: `Turn started for team: ${updatedGame.currentTurn.teamName}. ${updatedGame.currentTurn.describer} is the describer!`,
+      round: updatedGame.currentRound,
+      turn: updatedGame.playingTurn,
+      time: updatedGame.timePerTurn,
       wordToGuess: updatedGame.currentTurn.wordToGuess,
     });
     // Start timeout for first turn
@@ -71,7 +74,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     this.timerService.startTimer(gameId, timePerTurn, async () => {
       const turn = await this.turnService.endTurn(gameId);
-      this.server.emit('turnEnded', { message: 'Turn ended due to timeout', turn });
+      this.server.emit('turnEnded', { 
+        message: `Turn ended duo to  timeout for ${turn.currentTurn.teamName}. The word was: ${turn.currentTurn.wordToGuess}`,
+        // turn
+       });
 
       const { gameOver, game: nextTurn } = await this.turnService.startNextTurn(gameId);
       if (gameOver) {
@@ -96,7 +102,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log('Game Ended.');
       } else {
         // If game continues, start next turn
-        this.server.emit('turnStarted', nextTurn.currentTurn);
+        this.server.emit('turnStarted', {
+          message: `Turn started for team: ${nextTurn.currentTurn.teamName}. ${nextTurn.currentTurn.describer} is the describer!`,
+          round: nextTurn.currentRound,
+          turn: nextTurn.playingTurn,
+          time: nextTurn.timePerTurn,
+          wordToGuess: nextTurn.currentTurn.wordToGuess,
+      });
         this.startTurnTimer(gameId, nextTurn.currentTurn.teamName, nextTurn.timePerTurn);
       }
     });
@@ -124,12 +136,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const turnEnded = await this.turnService.endTurn(gameId);
       this.server.emit('turnEnded', {
-        message: 'Correct word guessed! Turn ended',
-        turn: turnEnded,
+        message: `Correct word guessed! Turn ended for team ${turnEnded.currentTurn.teamName}`,
       });
       // Jump next turn
       const nextTurn = await this.turnService.startNextTurn(gameId);
-      this.server.emit('turnStarted', nextTurn);
+      this.server.emit('turnStarted', {
+          message: `Turn started for team: ${nextTurn.game.currentTurn.teamName}. ${nextTurn.game.currentTurn.describer} is the describer!`,
+          round: nextTurn.game.currentRound,
+          turn: nextTurn.game.playingTurn,
+          time: nextTurn.game.timePerTurn,
+          wordToGuess: nextTurn.game.currentTurn.wordToGuess,
+      });
       this.startTurnTimer(
         gameId,
         nextTurn.game.currentTurn.teamName,
