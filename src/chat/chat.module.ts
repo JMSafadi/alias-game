@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatService } from './services/chat.service';
-import { ChatGateway } from './chat.gateway';
 import { Message, MessageSchema } from './schemas/message.schema';
 // import { CommonModule } from '../common/common.module';
 import { ChatController } from './chat.controller';
@@ -25,10 +24,6 @@ import { ChatController } from './chat.controller';
      * ChatService handles the core chat operations such as saving and retrieving messages.
      */
     ChatService,
-    /**
-     * ChatGateway provides real-time communication through WebSockets.
-     */
-    ChatGateway,
   ],
   controllers: [
     /**
@@ -36,5 +31,6 @@ import { ChatController } from './chat.controller';
      */
     ChatController,
   ],
+  exports: [ChatService, MongooseModule],
 })
 export class ChatModule {}
