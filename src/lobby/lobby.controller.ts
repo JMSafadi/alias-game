@@ -6,42 +6,41 @@ import { AssignTeamsDto } from './dto/AssignTeams.dto';
 
 @Controller('lobby')
 export class LobbyController {
-    constructor(private lobbyService: LobbyService) { }
+  constructor(private lobbyService: LobbyService) {}
 
-    //Route to fetch all lobbies.
-    @Get()
-    async getAllLobbies() {
-        return this.lobbyService.getAllLobbies();
-    }
+  //Route to fetch all lobbies.
+  @Get()
+  async getAllLobbies() {
+    return this.lobbyService.getAllLobbies();
+  }
 
-    //Route to fetch a specific lobby by id.
-    @Get(':id')
-    async getLobbyById(@Param('id') lobbyId: string) {
-        return this.lobbyService.getLobbyById(lobbyId);
-    }
+  //Route to fetch a specific lobby by id.
+  @Get(':id')
+  async getLobbyById(@Param('id') lobbyId: string) {
+    return this.lobbyService.getLobbyById(lobbyId);
+  }
 
-    //Route to create a new lobby.
-    @Post('create')
-    createLobby(@Body() createLobbyDto: CreateLobbyDto) {
-        return this.lobbyService.createLobby(createLobbyDto);
-    }
+  //Route to create a new lobby.
+  @Post('create')
+  createLobby(@Body() createLobbyDto: CreateLobbyDto) {
+    return this.lobbyService.createLobby(createLobbyDto);
+  }
 
-    //Route to join an existing lobby.
-    @Post('join')
-    joinLobby(@Body() joinLobbyDto: JoinLobbyDto) {
-        return this.lobbyService.joinLobby(joinLobbyDto);
-    }
+  //Route to join an existing lobby.
+  @Post('join')
+  joinLobby(@Body() joinLobbyDto: JoinLobbyDto) {
+    return this.lobbyService.joinLobby(joinLobbyDto);
+  }
 
-    //Route to assign players to each team.
-    @Post('teams')
-    assignTeams(@Body() assignTeamsDto: AssignTeamsDto) {
-        return this.lobbyService.assignTeams(assignTeamsDto);
-    }
+  //Route to assign players to each team.
+  @Post('teams')
+  assignTeams(@Body() assignTeamsDto: AssignTeamsDto) {
+    return this.lobbyService.assignTeams(assignTeamsDto);
+  }
 
-    //Route to delete a lobby by id.
-    @Delete(':id')
-    async deleteLobby(@Param('id') lobbyId: string) {
-        return this.lobbyService.deleteLobbyById(lobbyId);
-    }
-
+  //Route to delete a lobby by id.
+  @Delete(':id')
+  async deleteLobby(@Param('id') lobbyId: string) {
+    return this.lobbyService.deleteLobbyById(lobbyId);
+  }
 }
