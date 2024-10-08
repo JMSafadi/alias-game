@@ -9,6 +9,7 @@ import { GameModule } from './game/game.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LobbyModule } from './lobby/lobby.module';
+import { AuthModule } from './auth/auth.module';
 
 /**
  * The root module of the application.
@@ -40,7 +41,10 @@ import { LobbyModule } from './lobby/lobby.module';
      * The connection string is retrieved from an environment variable named `MONGO_URI`.
      */
     MongooseModule.forRoot(process.env.MONGO_URI),
-
+    /**
+     * AuthModule provides functionality related to auth management, including login and signup.
+     */
+    AuthModule,
     /**
      * UsersModule provides functionality related to user management, including CRUD operations.
      */
