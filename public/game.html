@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alias Game</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css"
+    />
+    <script
+      src="https://cdn.socket.io/4.3.2/socket.io.min.js"
+      integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      // Initialize single socket connection with '/game' namespace
+      const socket = io('http://localhost:3000/game');
+
+      // Socket events
+      socket.on('connect', function () {
+        console.log('Connected to GameGateway');
+      });
+
+      socket.on('receive_message', function (data) {
+        console.log('Received message:', data);
+        const messagesDiv = document.getElementById('messages');
+        const newMessage = document.createElement('div');
+        newMessage.textContent = `${data.sender}: ${data.content}`;
+        messagesDiv.appendChild(newMessage);
+      });
+
+      socket.on('turnStarted', function (data) {
+        console.log('Turn started:', data);
+        document.getElementById('wordToGuess').textContent =
+          `Word to guess: ${data.wordToGuess}`;
+      });
+
+      socket.on('gameEnded', function (data) {
+        console.log('Game Ended:', data);
+        alert(data.message);
+      });
+
+      socket.on('scoreUpdated', function (data) {
+        console.log('Score updated:', data);
+        const messagesDiv = document.getElementById('messages');
+        const scoreMessage = document.createElement('div');
+        scoreMessage.textContent = `Score Update: ${data.message}`;
+        messagesDiv.appendChild(scoreMessage);
+      });
+
+      socket.on('guessFailed', function (data) {
+        console.log('Guess failed:', data);
+        const messagesDiv = document.getElementById('messages');
+        const failMessage = document.createElement('div');
+        failMessage.style.color = 'red';
+        failMessage.textContent = `Guess Failed: ${data.message}`;
+        messagesDiv.appendChild(failMessage);
+      });
+
+      function sendMessage(isGuess = false) {
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput.value;
+
+        // Determine message type: description, chat, or guess
+        let messageType = 'chat';
+        if (document.getElementById('isDescriber').checked) {
+          messageType = 'description';
+        } else if (isGuess) {
+          messageType = 'guess';
+        }
+
+        // Emit the message to the server via socket
+        socket.emit('send_message', {
+          content: message,
+          messageType: messageType,
+        });
+
+        messageInput.value = '';
+      }
+    </script>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <div class="columns">
+        <!-- Main Chat Section -->
+        <div class="column is-two-thirds">
+          <div class="box">
+            <h3 class="title is-4">Chat</h3>
+            <div
+              id="messages"
+              style="
+                height: 300px;
+                overflow-y: scroll;
+                border: 1px solid #ccc;
+                padding: 10px;
+              "
+            >
+              <!-- Messages will be displayed here -->
+            </div>
+            <input
+              id="messageInput"
+              class="input mt-2"
+              placeholder="Enter message"
+            />
+            <div class="mt-2">
+              <input type="checkbox" id="isDescriber" />
+              <label for="isDescriber">Describer Mode</label>
+            </div>
+            <button class="button is-link mt-2" onclick="sendMessage()">
+              Send
+            </button>
+            <button class="button is-warning mt-2" onclick="sendMessage(true)">
+              Guess
+            </button>
+          </div>
+        </div>
+
+        <!-- Setup Game Section -->
+        <div class="column">
+          <div class="box">
+            <h3 class="title is-4">Setup Game</h3>
+            <div class="mb-4">
+              <label class="label">Lobby ID</label>
+              <input id="lobbyId" class="input" placeholder="Enter lobby ID" />
+            </div>
+            <div class="mb-4">
+              <h4 class="subtitle is-6">Team 1</h4>
+              <input
+                id="team1Name"
+                class="input mb-2"
+                placeholder="Enter team 1 name"
+              />
+              <input
+                id="team1Players"
+                class="input"
+                placeholder="Enter team 1 players (comma separated)"
+              />
+            </div>
+            <div class="mb-4">
+              <h4 class="subtitle is-6">Team 2</h4>
+              <input
+                id="team2Name"
+                class="input mb-2"
+                placeholder="Enter team 2 name"
+              />
+              <input
+                id="team2Players"
+                class="input"
+                placeholder="Enter team 2 players (comma separated)"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="label">Rounds</label>
+              <input id="rounds" class="input" type="number" min="1" max="10" />
+            </div>
+            <div class="mb-4">
+              <label class="label">Time per Turn (seconds)</label>
+              <input
+                id="timePerTurn"
+                class="input"
+                type="number"
+                min="30"
+                max="120"
+              />
+            </div>
+            <button class="button is-primary mt-4" onclick="startGame()">
+              Start Game
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
