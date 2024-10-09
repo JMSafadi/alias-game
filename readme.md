@@ -34,20 +34,45 @@ The game concludes after a predetermined number of rounds, with the highest-scor
 - **Database**: MongoDB
 
 ## Base URL
+http://localhost:3000
 
 ## Install
+Project uses **Docker** to simplify development enviroment. Here are steps to install and run project.  
+You must have installed in your local machine:
+- [Docker](https://www.docker.com/get-started)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+First, clone this repository to your machine:
+```bash
+git clone https://github.com/JMSafadi/alias-game/
+cd alias-game-app
+```
+
+Create and run containers with docker:
+```bash
+docker-compose up --build
+```
+To stop containers when you are done with application:
+```bash
+docker-compose down
+```
+If you want to delete volumes and restart database:
+```bash
+docker-compose down -v
+docker-compose up --build
+```
 
 ## Setting Up Environment Variables  
 
-1. **Copy the Example File:**  
+**Copy the Example File:** 
 
 To create your own environment configuration, start by copying the example `.env.example` file to a new file named `.env` in the root directory of the project.
 
-2. **Edit the '.env' file:**  
+**Edit the '.env' file:**  
 
 Open the newly created `.env` file in a text editor and replace the placeholder values with your actual MongoDB credentials.
 
-3. **Run the Application:**  
+**Run the Application:**  
 
 Once you have set your environment variables, you can start the application with Docker.
 
@@ -55,7 +80,7 @@ Once you have set your environment variables, you can start the application with
 
 Make sure to keep your `.env` file private and not share it in version control. The `.env` file is listed in `.gitignore`  to prevent it from being tracked by Git.
 
-## API Documentation
+## API
 ### 1. Endpoint /auth
 #### `POST` - `/auth`
 Register new player in game with name and password. Mandatory step to play.
@@ -82,7 +107,7 @@ curl -X 'POST'
 Route that manages game rooms, allowing players to create and join rooms, and facilitating team selection. This ensures that players are appropriately grouped before the game starts.
 
 ### 2.1 Endpoint: `/lobby`
-#### `GET` - List all existing lobbies
+#### `GET` - List with all existing lobbies
 
 Shows the user all existing lobbies.
 
@@ -92,28 +117,28 @@ curl -X 'GET' '/lobby' \
 ```
 
 Response:
-```
+```json
+{
+  "lobbyID": "validID",
+  "lobbyOwner": "Player3",
+  "playersPerTeam": 2,
+  "maxPlayers": 4,
+  "currentPlayers": 4,
+  "players": [
     {
-        "lobbyID": "validID",
-        "lobbyOwner": "Player3",
-        "playersPerTeam": 2,
-        "maxPlayers": 4,
-        "currentPlayers": 4,
-        "players": [
-            {
-                "username": "Player3"
-            },
-            {
-                "username": "Player11"
-            },
-            {
-                "username": "Player2"
-            },
-            {
-                "username": "Player5"
-            }
-        ]
+      "username": "Player3"
+    },
+    {
+      "username": "Player11"
+    },
+    {
+      "username": "Player2"
+    },
+    {
+      "username": "Player5"
     }
+  ]
+}
 ```
 
 Error Responses:
@@ -133,26 +158,26 @@ curl -X GET /lobby/:id
 ```
 
 Response:
-```
+```json
 {
-    "lobbyOwner": "Player3",
-    "playersPerTeam": 2,
-    "maxPlayers": 4,
-    "currentPlayers": 4,
-    "players": [
-        {
-            "username": "Player3"
-        },
-        {
-            "username": "Player11"
-        },
-        {
-            "username": "Player2"
-        },
-        {
-            "username": "Player5"
-        }
-    ]
+  "lobbyOwner": "Player3",
+  "playersPerTeam": 2,
+  "maxPlayers": 4,
+  "currentPlayers": 4,
+  "players": [
+    {
+        "username": "Player3"
+    },
+    {
+        "username": "Player11"
+    },
+    {
+        "username": "Player2"
+    },
+    {
+        "username": "Player5"
+    }
+  ]
 }
 ```
 
@@ -170,8 +195,8 @@ Allows a user to create a new game lobby. The creator becomes the lobby owner an
 **Request:**
 ```bash
 curl -X 'POST' '/lobby/create' \
--H 'Content-Type: application/json' \
--d '{
+-d 
+'{
   "userId": "validID",
   "playersPerTeam": 2
 }'
@@ -196,8 +221,8 @@ available spots.
 **Request:**
 ```bash
 curl -X 'POST' '/lobby/join' \
--H 'Content-Type: application/json' \
--d '{
+-d 
+'{
   "userId": "validUserID",
   "lobbyId": "validLobbyID"
 }'
@@ -231,8 +256,8 @@ Assigns players to teams in the lobby before the game starts.
 Request:
 ```bash
 curl -X 'POST' '/lobby/teams' \
--H 'Content-Type: application/json' \
--d '{
+-d 
+'{
   "lobbyId": "validID",
   "teams": [
     {
@@ -280,7 +305,9 @@ Route that handles all chat functionalities within the game, allowing players to
 
 **Request:**
 ```bash
-curl -X 'POST' '/chat/send' -d {
+curl -X 'POST' '/chat/send' 
+-d 
+{
   "lobbyId": "123",
   "username": "John Doe",
   "message": "Let's start the game!"
@@ -329,7 +356,9 @@ Route that manages word validation and retrieves similar words to enhance gamepl
 
 **Request:**
 ```bash
-curl -X 'POST' '/words/validate' -d {
+curl -X 'POST' '/words/validate' 
+-d 
+{
   "word": "rabbit"
 }
 ```
@@ -357,7 +386,8 @@ curl -X 'GET' '/words/similar?word=rabbit'
 }
 ```
 
-## Socket Events
+## Socket Events  
+  
 ``startGame``  
 Client sent event to start the game once teams and players have veen set up in a lobby.  
   
@@ -478,6 +508,23 @@ If guess is correct:
 ```
 
 ## Database Schema
+### User model
+| Field                | Type       | Description                                                |
+| :--------------------| :----------| :----------------------------------------------------------|
+| `username`            |  `string`  | User name. (unique)                                       |
+| `password`             |  `string`  | User password.                          |
+
+
+### Chat model
+| Field                | Type       | Description                                                |
+| :--------------------| :----------| :----------------------------------------------------------|
+| `content`            |  `string`  | Content of the chat.                                       |
+| `sender`             |  `string`  | Identifier of the message sender.                          |
+| `timestamp`          |  `Date`    | Timestamp when the message was sent.                       |
+
+
+
+
 ### Game model
 | Field                | Type       | Description                                                |
 | :--------------------| :----------| :----------------------------------------------------------|
