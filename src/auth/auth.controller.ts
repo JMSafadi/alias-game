@@ -7,13 +7,15 @@ import { SignUpDto } from './dto/signup.dto';
 export class AuthController {
     constructor(private authService: AuthService) { }
 
+    //Route to register as a new user.
     @Post('/signup')
-    signUp(@Body() signUpDto: SignUpDto): Promise<{ token: string }> {
+    signUp(@Body() signUpDto: SignUpDto): Promise<{ message: string }> {
         return this.authService.signUp(signUpDto);
     }
 
-    @Get('/login')
-    login(@Body() loginDto: LoginDto): Promise<{ token: string }> {
+    //Route to login once user has an account.
+    @Post('/login')
+    login(@Body() loginDto: LoginDto): Promise<{ token: string; message: string }> {
         return this.authService.login(loginDto);
     }
 }
