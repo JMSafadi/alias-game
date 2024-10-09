@@ -1,6 +1,3 @@
-/* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ConnectedSocket,
   MessageBody,
@@ -22,25 +19,25 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  handleConnection(client: any) {
+  handleConnection(client) {
     console.log(`Client connected: ${client.id}`);
   }
 
-  handleDisconnect(client: any) {
+  handleDisconnect(client) {
     console.log(`Client disconnected: ${client.id}`);
   }
 
   constructor(
     private readonly gameService: GameService,
     private readonly turnService: TurnService,
-    private readonly timerService: TimerService
+    private readonly timerService: TimerService,
   ) {}
   // Event to init game
   @SubscribeMessage('startGame')
   async handleStartGame(
     @MessageBody() startGameDto: StartGameDto,
-    @ConnectedSocket() client: Socket,
-  ) {
+    @ConnectedSocket() _client: Socket,
+  ): Promise<void> {
     const game = await this.gameService.startGame(startGameDto);
     this.server.emit('gameStarted', { message: 'Game started!', game });
     // Init new game state with first turn
@@ -69,27 +66,31 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // Method to init timer
   private startTurnTimer(
     gameId: string,
-    teamName: string,
+    _teamName: string,
     timePerTurn: number,
-  ) {
+  ): void {
     this.timerService.startTimer(gameId, timePerTurn, async () => {
       const turn = await this.turnService.endTurn(gameId);
-      this.server.emit('turnEnded', { 
+      this.server.emit('turnEnded', {
         message: `Turn ended duo to  timeout for ${turn.currentTurn.teamName}. The word was: ${turn.currentTurn.wordToGuess}`,
-        // turn
-       });
+      });
 
-      const { gameOver, game: nextTurn } = await this.turnService.startNextTurn(gameId);
+      const { gameOver, game: nextTurn } =
+        await this.turnService.startNextTurn(gameId);
       if (gameOver) {
         const teamsInfo = nextTurn.teamsInfo;
         // Find max score team/s
-        const maxScore = Math.max(...teamsInfo.map(team => team.score));
-        const winningTeams = teamsInfo.filter(team => team.score === maxScore);
+        const maxScore = Math.max(...teamsInfo.map((team) => team.score));
+        const winningTeams = teamsInfo.filter(
+          (team) => team.score === maxScore,
+        );
         let endGameMessage = '';
 
         if (winningTeams.length > 1) {
           // If there is a tie
-          const tieTeamNames = winningTeams.map(team => team.teamName).join(', ');
+          const tieTeamNames = winningTeams
+            .map((team) => team.teamName)
+            .join(', ');
           endGameMessage = `Game over! It's a tie between teams: ${tieTeamNames} with ${maxScore} score.`;
         } else {
           // If a team won
@@ -108,16 +109,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           turn: nextTurn.playingTurn,
           time: nextTurn.timePerTurn,
           wordToGuess: nextTurn.currentTurn.wordToGuess,
-      });
-        this.startTurnTimer(gameId, nextTurn.currentTurn.teamName, nextTurn.timePerTurn);
+        });
+        this.startTurnTimer(
+          gameId,
+          nextTurn.currentTurn.teamName,
+          nextTurn.timePerTurn,
+        );
       }
     });
   }
   @SubscribeMessage('guessWord')
   async handleGuessWord(
     @MessageBody() guessWordDto: GuessWordDto,
-    @ConnectedSocket() client: Socket,
-  ) {
+    @ConnectedSocket() _client: Socket,
+  ): Promise<void> {
     const { gameId, teamName, guessWord } = guessWordDto;
     // Verify guess attempt
     const result = await this.gameService.checkWordGuess(
@@ -141,11 +146,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Jump next turn
       const nextTurn = await this.turnService.startNextTurn(gameId);
       this.server.emit('turnStarted', {
-          message: `Turn started for team: ${nextTurn.game.currentTurn.teamName}. ${nextTurn.game.currentTurn.describer} is the describer!`,
-          round: nextTurn.game.currentRound,
-          turn: nextTurn.game.playingTurn,
-          time: nextTurn.game.timePerTurn,
-          wordToGuess: nextTurn.game.currentTurn.wordToGuess,
+        message: `Turn started for team: ${nextTurn.game.currentTurn.teamName}. ${nextTurn.game.currentTurn.describer} is the describer!`,
+        round: nextTurn.game.currentRound,
+        turn: nextTurn.game.playingTurn,
+        time: nextTurn.game.timePerTurn,
+        wordToGuess: nextTurn.game.currentTurn.wordToGuess,
       });
       this.startTurnTimer(
         gameId,
@@ -154,7 +159,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
     } else {
       // If incorrect word, send notify
-      this.server.emit('guessFailed', { message: 'Incorrect word! Team lost 5 points. Try again.' });
+      this.server.emit('guessFailed', {
+        message: 'Incorrect word! Team lost 5 points. Try again.',
+      });
     }
   }
 }

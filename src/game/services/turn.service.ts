@@ -1,6 +1,3 @@
-/* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { InjectModel } from '@nestjs/mongoose';
 import { Game } from '../schemas/Game.schema';
 import { Model } from 'mongoose';
@@ -9,21 +6,29 @@ import { StartTurnDto } from '../dto/start-turn.dto';
 import { TeamService } from './team.service';
 import { WordService } from './words.service';
 
+interface StartNextTurnResponse {
+  gameOver: boolean;
+  game: Game;
+}
+
 @Injectable()
 export class TurnService {
-  constructor(@InjectModel(Game.name) 
-  private gameModel: Model<Game>,
-  private readonly teamService: TeamService,
-  private readonly wordService: WordService
-) {}
-  async startTurn(startTurnDto: StartTurnDto) {
+  constructor(
+    @InjectModel(Game.name)
+    private gameModel: Model<Game>,
+    private readonly teamService: TeamService,
+    private readonly wordService: WordService,
+  ) {}
+  async startTurn(startTurnDto: StartTurnDto): Promise<Game> {
     // Find game
     const game = await this.gameModel.findById(startTurnDto.gameId);
     if (!game) {
       throw new NotFoundException('Game not found');
     }
     // Find team playing
-    const currentTeam = game.teamsInfo.find(team => team.teamName === startTurnDto.teamName);
+    const currentTeam = game.teamsInfo.find(
+      (team) => team.teamName === startTurnDto.teamName,
+    );
     if (!currentTeam) {
       throw new NotFoundException('Team not found');
     }
@@ -46,7 +51,7 @@ export class TurnService {
     await game.save();
     return game;
   }
-  async endTurn(gameId: string) {
+  async endTurn(gameId: string): Promise<Game> {
     const game = await this.gameModel.findById(gameId);
     if (!game) {
       throw new NotFoundException('Game not found');
@@ -56,7 +61,7 @@ export class TurnService {
     await game.save();
     return game;
   }
-  async startNextTurn(gameId: string) {
+  async startNextTurn(gameId: string): Promise<StartNextTurnResponse> {
     const game = await this.gameModel.findById(gameId);
     if (!game) {
       throw new NotFoundException('Game not found');
@@ -79,7 +84,9 @@ export class TurnService {
     // Get next team to change turn
     const nextTeam = this.teamService.getNextTeam(game);
     // Find team playing
-    const currentTeam = game.teamsInfo.find(team => team.teamName === nextTeam);
+    const currentTeam = game.teamsInfo.find(
+      (team) => team.teamName === nextTeam,
+    );
     if (!currentTeam) {
       throw new NotFoundException('Team not found');
     }

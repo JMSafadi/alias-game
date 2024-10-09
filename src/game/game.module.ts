@@ -8,6 +8,7 @@ import { TimerService } from './services/timer.service';
 import { TeamService } from './services/team.service';
 import { TurnService } from './services/turn.service';
 import { WordService } from './services/words.service';
+import { SimilarityService } from 'src/utils/similarity.service';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { WordService } from './services/words.service';
     TeamService,
     TurnService,
     WordService,
+    SimilarityService,
   ],
 })
 export class GameModule {}
