@@ -29,16 +29,30 @@ export class SimilarityService {
     const soundex2 = metaphone.process(normalizedGuess);
     console.log('soundex: ', soundex1, soundex2);
     const result = metaphone.compare(soundex1, soundex2);
-    console.log('phonetic similarity is : ', result);
+    console.log('phonetic similarity is: ', result);
     return result ? 100 : 0;
   }
-  // Calculate overall simlairity to apply penalty
-  calculateOverallSimilarity(word: string, guess: string): number {
+  // Calculate overall simlairity for one word
+  private calculateOverallSimilarity(word: string, guess: string): number {
     const lexicalSimilarity = this.calculateLexicalSimilarity(word, guess);
     const phonetixSimilarity = this.calculatePhoneticSimilarity(word, guess);
     const result = (lexicalSimilarity + phonetixSimilarity) / 2;
     console.log('overall similarity: ', result);
     return result;
+  }
+  // Calculate similarity for multiple words string message
+  calculateSimilarityText(text: string, guess: string): number {
+    const words = text.split(' ');
+    let highestSimilarity = 0;
+
+    for (const word of words) {
+      const similarity = this.calculateOverallSimilarity(guess, word);
+      if (similarity > highestSimilarity) {
+        highestSimilarity = similarity;
+      }
+    }
+    console.log('Highest similarity in message: ', highestSimilarity);
+    return highestSimilarity;
   }
   checkGuess(word: string, guess: string): boolean {
     const normalizedWord = this.normalizeString(word);
