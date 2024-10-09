@@ -1,6 +1,3 @@
-/* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { InjectModel } from '@nestjs/mongoose';
 import { Game } from '../schemas/Game.schema';
 import { Model } from 'mongoose';
@@ -8,6 +5,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { StartTurnDto } from '../dto/start-turn.dto';
 import { TeamService } from './team.service';
 import { WordService } from './words.service';
+
+interface StartNextTurnResponse {
+  gameOver: boolean;
+  game: Game;
+}
 
 @Injectable()
 export class TurnService {
@@ -17,7 +19,7 @@ export class TurnService {
     private readonly teamService: TeamService,
     private readonly wordService: WordService,
   ) {}
-  async startTurn(startTurnDto: StartTurnDto) {
+  async startTurn(startTurnDto: StartTurnDto): Promise<Game> {
     // Find game
     const game = await this.gameModel.findById(startTurnDto.gameId);
     if (!game) {
@@ -49,7 +51,7 @@ export class TurnService {
     await game.save();
     return game;
   }
-  async endTurn(gameId: string) {
+  async endTurn(gameId: string): Promise<Game> {
     const game = await this.gameModel.findById(gameId);
     if (!game) {
       throw new NotFoundException('Game not found');
@@ -59,7 +61,7 @@ export class TurnService {
     await game.save();
     return game;
   }
-  async startNextTurn(gameId: string) {
+  async startNextTurn(gameId: string): Promise<StartNextTurnResponse> {
     const game = await this.gameModel.findById(gameId);
     if (!game) {
       throw new NotFoundException('Game not found');

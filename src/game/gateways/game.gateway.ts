@@ -76,6 +76,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() startGameDto: StartGameDto,
     @ConnectedSocket() _client: Socket,
   ): Promise<void> {
+    @ConnectedSocket() _client: Socket,
+  ): Promise<void> {
     const game = await this.gameService.startGame(startGameDto);
     this.server.emit('gameStarted', { message: 'Game started!', game });
     // Init new game state with first turn
@@ -104,16 +106,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // Method to init timer
   private startTurnTimer(
     gameId: string,
-    teamName: string,
+    _teamName: string,
     timePerTurn: number,
+  ): void {
   ): void {
     this.timerService.startTimer(gameId, timePerTurn, async () => {
       const turn = await this.turnService.endTurn(gameId);
+      this.server.emit('turnEnded', {
       this.server.emit('turnEnded', {
         message: `Turn ended duo to  timeout for ${turn.currentTurn.teamName}. The word was: ${turn.currentTurn.wordToGuess}`,
         // turn
       });
 
+      const { gameOver, game: nextTurn } =
+        await this.turnService.startNextTurn(gameId);
       const { gameOver, game: nextTurn } =
         await this.turnService.startNextTurn(gameId);
       if (gameOver) {
@@ -123,10 +129,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const winningTeams = teamsInfo.filter(
           (team) => team.score === maxScore,
         );
+        const maxScore = Math.max(...teamsInfo.map((team) => team.score));
+        const winningTeams = teamsInfo.filter(
+          (team) => team.score === maxScore,
+        );
         let endGameMessage = '';
 
         if (winningTeams.length > 1) {
           // If there is a tie
+          const tieTeamNames = winningTeams
+            .map((team) => team.teamName)
+            .join(', ');
           const tieTeamNames = winningTeams
             .map((team) => team.teamName)
             .join(', ');
@@ -154,12 +167,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           nextTurn.currentTurn.teamName,
           nextTurn.timePerTurn,
         );
+        });
+        this.startTurnTimer(
+          gameId,
+          nextTurn.currentTurn.teamName,
+          nextTurn.timePerTurn,
+        );
       }
     });
   }
   @SubscribeMessage('guessWord')
   async handleGuessWord(
     @MessageBody() guessWordDto: GuessWordDto,
+    @ConnectedSocket() _client: Socket,
+  ): Promise<void> {
     @ConnectedSocket() _client: Socket,
   ): Promise<void> {
     const { gameId, teamName, guessWord } = guessWordDto;
@@ -190,6 +211,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         turn: nextTurn.game.playingTurn,
         time: nextTurn.game.timePerTurn,
         wordToGuess: nextTurn.game.currentTurn.wordToGuess,
+        message: `Turn started for team: ${nextTurn.game.currentTurn.teamName}. ${nextTurn.game.currentTurn.describer} is the describer!`,
+        round: nextTurn.game.currentRound,
+        turn: nextTurn.game.playingTurn,
+        time: nextTurn.game.timePerTurn,
+        wordToGuess: nextTurn.game.currentTurn.wordToGuess,
       });
       this.startTurnTimer(
         gameId,
@@ -198,6 +224,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
     } else {
       // If incorrect word, send notify
+      this.server.emit('guessFailed', {
+        message: 'Incorrect word! Team lost 5 points. Try again.',
+      });
       this.server.emit('guessFailed', {
         message: 'Incorrect word! Team lost 5 points. Try again.',
       });
