@@ -12,6 +12,9 @@ export class Turn {
   @Prop({ required: true })
   describer: string;
 
+  @Prop({ type: [String], default: [] })
+  guessers: string[]; // Lista graczy, którzy mogą zgadywać w danym momencie
+
   @Prop({ default: false })
   isTurnActive: boolean;
 }

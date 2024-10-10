@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ChatService } from './services/chat.service';
-import { Message, MessageSchema } from './schemas/message.schema';
+import { MessageService } from '../game/services/message.service';
+import { Message, MessageSchema } from '../game/schemas/Message.schema';
 // import { CommonModule } from '../common/common.module';
 import { ChatController } from './chat.controller';
+import { SimilarityModule } from 'src/utils/similarity.module';
 
 /**
  * ChatModule handles the chat functionality of the application, including real-time communication and message storage.
@@ -14,6 +15,7 @@ import { ChatController } from './chat.controller';
      * MongooseModule is used to import the Message schema to interact with the MongoDB database.
      */
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
+    SimilarityModule,
     /**
      * CommonModule is imported to provide common utilities, such as authentication guards, across the chat module.
      */
@@ -21,9 +23,9 @@ import { ChatController } from './chat.controller';
   ],
   providers: [
     /**
-     * ChatService handles the core chat operations such as saving and retrieving messages.
+     * MessageService handles the core chat operations such as saving and retrieving messages.
      */
-    ChatService,
+    MessageService,
   ],
   controllers: [
     /**
@@ -31,6 +33,6 @@ import { ChatController } from './chat.controller';
      */
     ChatController,
   ],
-  exports: [ChatService, MongooseModule],
+  exports: [MessageService, MongooseModule],
 })
 export class ChatModule {}

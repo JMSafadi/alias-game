@@ -14,70 +14,97 @@
       crossorigin="anonymous"
     ></script>
     <script>
-      // Initialize single socket connection with '/game' namespace
-      const socket = io('http://localhost:3000/game');
+      const socket = io('http://localhost:3000/game'); // Inicjalizacja socket
 
-      // Socket events
-      socket.on('connect', function () {
-        console.log('Connected to GameGateway');
-      });
+      let currentGameId; // Zmienna, która przechowuje aktualny gameId po utworzeniu gry
 
-      socket.on('receive_message', function (data) {
-        console.log('Received message:', data);
-        const messagesDiv = document.getElementById('messages');
-        const newMessage = document.createElement('div');
-        newMessage.textContent = `${data.sender}: ${data.content}`;
-        messagesDiv.appendChild(newMessage);
-      });
+      function startGame() {
+        const lobbyId = document.getElementById('lobbyId').value;
+        const team1Name = document.getElementById('team1Name').value;
+        const team1Players = document
+          .getElementById('team1Players')
+          .value.split(',');
+        const team2Name = document.getElementById('team2Name').value;
+        const team2Players = document
+          .getElementById('team2Players')
+          .value.split(',');
+        const rounds = parseInt(document.getElementById('rounds').value);
+        const timePerTurn = parseInt(
+          document.getElementById('timePerTurn').value,
+        );
 
-      socket.on('turnStarted', function (data) {
-        console.log('Turn started:', data);
-        document.getElementById('wordToGuess').textContent =
-          `Word to guess: ${data.wordToGuess}`;
-      });
+        socket.emit('startGame', {
+          lobbyId,
+          teamsInfo: [
+            { teamName: team1Name, players: team1Players },
+            { teamName: team2Name, players: team2Players },
+          ],
+          rounds,
+          timePerTurn,
+        });
 
-      socket.on('gameEnded', function (data) {
-        console.log('Game Ended:', data);
-        alert(data.message);
-      });
+        socket.on('gameStarted', function (data) {
+          console.log('Game started:', data);
+          currentGameId = data.game._id; // Zapisz gameId do zmiennej
+        });
+      }
 
-      socket.on('scoreUpdated', function (data) {
-        console.log('Score updated:', data);
-        const messagesDiv = document.getElementById('messages');
-        const scoreMessage = document.createElement('div');
-        scoreMessage.textContent = `Score Update: ${data.message}`;
-        messagesDiv.appendChild(scoreMessage);
-      });
-
-      socket.on('guessFailed', function (data) {
-        console.log('Guess failed:', data);
-        const messagesDiv = document.getElementById('messages');
-        const failMessage = document.createElement('div');
-        failMessage.style.color = 'red';
-        failMessage.textContent = `Guess Failed: ${data.message}`;
-        messagesDiv.appendChild(failMessage);
-      });
-
-      function sendMessage(isGuess = false) {
+      function sendMessage() {
         const messageInput = document.getElementById('messageInput');
-        const message = messageInput.value;
+        const message = messageInput ? messageInput.value : '';
 
-        // Determine message type: description, chat, or guess
-        let messageType = 'chat';
-        if (document.getElementById('isDescriber').checked) {
-          messageType = 'description';
-        } else if (isGuess) {
-          messageType = 'guess';
+        if (!message) {
+          alert('Message cannot be empty!');
+          return;
         }
 
-        // Emit the message to the server via socket
+        const messageType = document.getElementById('isGuess').checked
+          ? 'guess'
+          : document.getElementById('isDescribe').checked
+            ? 'describe'
+            : 'chat';
+
+        const senderTeamName = document.getElementById('senderTeamName').value;
+
+        if (!senderTeamName) {
+          alert('Please enter your Team Name!');
+          return;
+        }
+
         socket.emit('send_message', {
           content: message,
-          messageType: messageType,
+          sender: socket.id,
+          gameId: currentGameId, // Użyj zapisanej zmiennej gameId
+          senderTeamName,
+          messageType,
         });
 
         messageInput.value = '';
       }
+
+      socket.on('turnStarted', function (data) {
+        console.log('Received turnStarted event data:', data);
+
+        // Aktualizacja informacji w interfejsie
+        if (
+          data &&
+          data.round &&
+          data.teamName &&
+          data.describer &&
+          data.wordToGuess
+        ) {
+          document.getElementById('currentRound').textContent =
+            `Current Round: ${data.round}`;
+          document.getElementById('currentTeam').textContent =
+            `Current Team: ${data.teamName}`;
+          document.getElementById('currentDescriber').textContent =
+            `Describer: ${data.describer}`;
+          document.getElementById('wordToGuess').textContent =
+            `Word to guess: ${data.wordToGuess}`;
+        } else {
+          console.warn('Received incomplete data for turnStarted:', data);
+        }
+      });
     </script>
   </head>
   <body>
@@ -104,15 +131,37 @@
               placeholder="Enter message"
             />
             <div class="mt-2">
-              <input type="checkbox" id="isDescriber" />
-              <label for="isDescriber">Describer Mode</label>
+              <input type="checkbox" id="isDescribe" />
+              <label for="isDescribe">Describe Mode</label>
+              <input type="checkbox" id="isGuess" />
+              <label for="isGuess">Guess Mode</label>
+            </div>
+            <div class="mt-2">
+              <input
+                id="senderTeamName"
+                class="input"
+                placeholder="Enter your team name"
+              />
             </div>
             <button class="button is-link mt-2" onclick="sendMessage()">
               Send
             </button>
-            <button class="button is-warning mt-2" onclick="sendMessage(true)">
-              Guess
-            </button>
+          </div>
+          <!-- Word to Guess Section -->
+          <div class="box mt-5">
+            <h3 class="title is-4">Game Info</h3>
+            <div id="currentRound" class="has-text-weight-bold mb-3">
+              Current Round:
+            </div>
+            <div id="currentTeam" class="has-text-weight-bold mb-3">
+              Current Team:
+            </div>
+            <div id="currentDescriber" class="has-text-weight-bold mb-3">
+              Describer:
+            </div>
+            <div id="wordToGuess" class="has-text-weight-bold mb-3">
+              Word to guess:
+            </div>
           </div>
         </div>
 

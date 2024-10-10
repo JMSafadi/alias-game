@@ -1,13 +1,13 @@
 import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
-import { ChatService } from './services/chat.service';
-import { Message } from './schemas/message.schema';
+import { MessageService } from '../game/services/message.service';
+import { Message } from '../game/schemas/Message.schema';
 
 /**
  * Controller responsible for handling chat-related HTTP requests.
  */
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly messageService: MessageService) {}
 
   /**
    * Handles the HTTP GET request to retrieve the chat history.
@@ -19,7 +19,7 @@ export class ChatController {
   async getChatHistory(): Promise<Message[]> {
     console.log('Handling request to get chat history');
     try {
-      const chatHistory = await this.chatService.getMessages();
+      const chatHistory = await this.messageService.getMessages();
       console.log('Chat history retrieved successfully');
       return chatHistory;
     } catch (error) {
