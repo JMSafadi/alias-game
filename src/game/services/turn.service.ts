@@ -36,12 +36,14 @@ export class TurnService {
     }
 
     // Assign describer role randomly
-    const describer = this.assignDescriber(currentTeam.players);
+    const describer = this.assignDescriber(
+      currentTeam.players.map((player) => player.trim()),
+    );
 
     // Determine guessers - wszyscy gracze w drużynie oprócz describera
-    const guessers = currentTeam.players.filter(
-      (player) => player !== describer,
-    );
+    const guessers = currentTeam.players
+      .map((player) => player.trim())
+      .filter((player) => player !== describer);
 
     // Update first round
     if (game.currentRound === 0 && game.playingTurn === 0) {
@@ -49,6 +51,11 @@ export class TurnService {
       game.playingTurn++;
     }
 
+    console.log('Initializing currentTurn with:');
+    console.log('teamName:', startTurnDto.teamName);
+    console.log('describer:', describer);
+    console.log('guessers:', guessers);
+    // Set next turn
     // Update current turn state and generate word
     game.currentTurn = {
       teamName: startTurnDto.teamName,
@@ -131,7 +138,8 @@ export class TurnService {
   }
 
   private assignDescriber(players: string[]): string {
-    const randomIndex = Math.floor(Math.random() * players.length);
-    return players[randomIndex];
+    const trimmedPlayers = players.map((player) => player.trim());
+    const randomIndex = Math.floor(Math.random() * trimmedPlayers.length);
+    return trimmedPlayers[randomIndex];
   }
 }

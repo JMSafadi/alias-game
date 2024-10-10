@@ -46,17 +46,18 @@ export class GameService {
   async getPlayerRole(gameId: string, playerId: string): Promise<string> {
     const game = await this.getGameById(gameId);
 
-    // Check if the player is the describer
+    console.log('Comparing playerId:', playerId);
+    console.log('Describer:', game.currentTurn.describer);
+    console.log('Guessers:', game.currentTurn.guessers);
+
     if (game.currentTurn && game.currentTurn.describer === playerId) {
       return 'describer';
     }
 
-    // Check if the player is one of the guessers
     if (game.currentTurn && game.currentTurn.guessers.includes(playerId)) {
       return 'guesser';
     }
 
-    // Otherwise, the player is a chat participant
     return 'chat';
   }
 

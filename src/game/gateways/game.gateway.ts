@@ -14,6 +14,7 @@ import { TurnService } from '../services/turn.service';
 import { TimerService } from '../services/timer.service';
 import { MessageService } from '../services/message.service';
 import { SendMessageDto } from '../dto/send-message.dto';
+import { TurnStartedDto } from '../dto/turn-started.dto';
 import { SimilarityService } from 'src/utils/similarity.service';
 import { Game } from '../schemas/Game.schema';
 
@@ -56,6 +57,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       console.log('Received message from client:', sendMessageDto);
+      console.log('Received message from client:');
+      console.log('Content:', sendMessageDto.content);
+      console.log('Sender:', sendMessageDto.sender);
+      console.log('Sender Team Name:', sendMessageDto.senderTeamName);
+      console.log('Message Type:', sendMessageDto.messageType);
 
       // Pobierz rolę gracza na podstawie aktualnego stanu gry
       const role = await this.gameService.getPlayerRole(
@@ -63,6 +69,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         sendMessageDto.sender,
       );
       sendMessageDto.role = role;
+
+      // Logi do weryfikacji ról
+      console.log('Comparing playerId:', sendMessageDto.sender);
+      console.log(
+        'Describer:',
+        (await this.gameService.getGameById(sendMessageDto.gameId)).currentTurn
+          .describer,
+      );
+      console.log(
+        'Guessers:',
+        (await this.gameService.getGameById(sendMessageDto.gameId)).currentTurn
+          .guessers,
+      );
 
       switch (sendMessageDto.messageType) {
         case 'describe':
@@ -99,6 +118,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() startGameDto: StartGameDto,
     @ConnectedSocket() _client: Socket,
   ): Promise<void> {
+    console.log('Received startGame event from client:', _client.id);
     const game = await this.gameService.startGame(startGameDto);
     this.server.emit('gameStarted', { message: 'Game started!', game });
     // Init new game state with first turn
@@ -107,17 +127,24 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       teamName: game.teamsInfo[0].teamName,
     });
     // Emit start turn event
-    console.log('Updated game state: ', updatedGame);
+    console.log('Emitting turnStarted event with data:');
+    console.log('teamName:', updatedGame.currentTurn.teamName);
+    console.log('describer:', updatedGame.currentTurn.describer);
+    console.log('wordToGuess:', updatedGame.currentTurn.wordToGuess);
 
-    this.server.emit('turnStarted', {
-      message: `Turn started for team: ${updatedGame.currentTurn.teamName}. ${updatedGame.currentTurn.describer} is the describer!`,
-      round: updatedGame.currentRound,
-      turn: updatedGame.playingTurn,
-      time: updatedGame.timePerTurn,
-      wordToGuess: updatedGame.currentTurn.wordToGuess,
-      teamName: updatedGame.currentTurn.teamName, // Dodanie teamName
-      describer: updatedGame.currentTurn.describer, // Dodanie describer
-    });
+    this.server.emit(
+      'turnStarted',
+      new TurnStartedDto({
+        message: `Turn started for team: ${updatedGame.currentTurn.teamName}. ${updatedGame.currentTurn.describer} is the describer!`,
+        round: updatedGame.currentRound,
+        turn: updatedGame.playingTurn,
+        time: updatedGame.timePerTurn,
+        wordToGuess: updatedGame.currentTurn.wordToGuess,
+        teamName: updatedGame.currentTurn.teamName,
+        describer: updatedGame.currentTurn.describer,
+      }),
+    );
+
     // Start timeout for first turn
     this.startTurnTimer(updatedGame);
   }
@@ -160,14 +187,25 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           });
           console.log('Game Ended.');
         } else {
-          // If game continues, start next turn
-          this.server.emit('turnStarted', {
-            message: `Turn started for team: ${nextTurn.currentTurn.teamName}. ${nextTurn.currentTurn.describer} is the describer!`,
-            round: nextTurn.currentRound,
-            turn: nextTurn.playingTurn,
-            time: nextTurn.timePerTurn,
-            wordToGuess: nextTurn.currentTurn.wordToGuess,
-          });
+          // Dodaj logi
+          console.log('Emitting turnStarted event with data:');
+          console.log('teamName:', nextTurn.currentTurn.teamName);
+          console.log('describer:', nextTurn.currentTurn.describer);
+          console.log('wordToGuess:', nextTurn.currentTurn.wordToGuess);
+
+          // Emituj zdarzenie turnStarted z użyciem TurnStartedDto
+          this.server.emit(
+            'turnStarted',
+            new TurnStartedDto({
+              message: `Turn started for team: ${nextTurn.currentTurn.teamName}. ${nextTurn.currentTurn.describer} is the describer!`,
+              round: nextTurn.currentRound,
+              turn: nextTurn.playingTurn,
+              time: nextTurn.timePerTurn,
+              wordToGuess: nextTurn.currentTurn.wordToGuess,
+              teamName: nextTurn.currentTurn.teamName,
+              describer: nextTurn.currentTurn.describer,
+            }),
+          );
           this.startTurnTimer(nextTurn);
         }
       },

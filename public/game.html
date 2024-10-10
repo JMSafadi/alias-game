@@ -18,35 +18,89 @@
 
       let currentGameId; // Zmienna, która przechowuje aktualny gameId po utworzeniu gry
 
+      socket.on('connect', () => {
+        console.log('Połączono z serwerem.');
+      });
+
+      socket.on('disconnect', () => {
+        console.log('Rozłączono z serwerem.');
+      });
+
+      socket.on('gameStarted', function (data) {
+        console.log('Game started:', data);
+        currentGameId = data.game._id; // Zapisz gameId do zmiennej
+      });
+
+      // Nasłuch na `turnStarted`, aby zaktualizować UI
+      socket.on('turnStarted', function (data) {
+        try {
+          console.log('Received turnStarted event data:', data);
+          console.log('data.round:', data.round);
+          console.log('data.teamName:', data.teamName);
+          console.log('data.describer:', data.describer);
+          console.log('data.wordToGuess:', data.wordToGuess);
+          if (data) {
+            document.getElementById('currentRound').textContent =
+              `Current Round: ${data.round}`;
+            document.getElementById('currentTeam').textContent =
+              `Current Team: ${data.teamName}`;
+            document.getElementById('currentDescriber').textContent =
+              `Describer: ${data.describer}`;
+            document.getElementById('wordToGuess').textContent =
+              `Word to guess: ${data.wordToGuess}`;
+          } else {
+            console.warn('Received empty data for turnStarted event.');
+          }
+        } catch (error) {
+          console.error('Error in turnStarted event handler:', error);
+        }
+      });
+
+      // Nasłuchuj zdarzeń 'receive_message', aby dodać wiadomości do czatu
+      socket.on('receive_message', function (data) {
+        console.log('Received message:', data); // Loguj dane, aby upewnić się, że są odbierane
+        const messagesDiv = document.getElementById('messages');
+
+        // Tworzenie nowego elementu, który reprezentuje wiadomość
+        const messageElement = document.createElement('div');
+        messageElement.textContent = `[${data.senderTeamName}] ${data.sender}: ${data.content}`;
+        messagesDiv.appendChild(messageElement);
+
+        // Automatyczne przewijanie do ostatniej wiadomości
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
+
       function startGame() {
         const lobbyId = document.getElementById('lobbyId').value;
         const team1Name = document.getElementById('team1Name').value;
         const team1Players = document
           .getElementById('team1Players')
-          .value.split(',');
+          .value.split(',')
+          .map((player) => player.trim());
         const team2Name = document.getElementById('team2Name').value;
         const team2Players = document
           .getElementById('team2Players')
-          .value.split(',');
+          .value.split(',')
+          .map((player) => player.trim());
         const rounds = parseInt(document.getElementById('rounds').value);
         const timePerTurn = parseInt(
           document.getElementById('timePerTurn').value,
         );
 
-        socket.emit('startGame', {
-          lobbyId,
-          teamsInfo: [
-            { teamName: team1Name, players: team1Players },
-            { teamName: team2Name, players: team2Players },
-          ],
-          rounds,
-          timePerTurn,
-        });
-
-        socket.on('gameStarted', function (data) {
-          console.log('Game started:', data);
-          currentGameId = data.game._id; // Zapisz gameId do zmiennej
-        });
+        // Upewnij się, że socket jest połączony
+        if (socket.connected) {
+          socket.emit('startGame', {
+            lobbyId,
+            teamsInfo: [
+              { teamName: team1Name, players: team1Players },
+              { teamName: team2Name, players: team2Players },
+            ],
+            rounds,
+            timePerTurn,
+          });
+        } else {
+          alert('Nie udało się połączyć z serwerem. Spróbuj ponownie.');
+        }
       }
 
       function sendMessage() {
@@ -64,47 +118,30 @@
             ? 'describe'
             : 'chat';
 
-        const senderTeamName = document.getElementById('senderTeamName').value;
+        const senderTeamName = document
+          .getElementById('senderTeamName')
+          .value.trim();
+        const playerName = document.getElementById('playerName').value.trim();
 
-        if (!senderTeamName) {
-          alert('Please enter your Team Name!');
+        if (!senderTeamName || !playerName) {
+          alert('Please enter your Team Name and Player Name!');
           return;
         }
 
+        // Logowanie dla weryfikacji
+        console.log('Sending message with playerName:', playerName);
+        console.log('Sending message with senderTeamName:', senderTeamName);
+
         socket.emit('send_message', {
           content: message,
-          sender: socket.id,
-          gameId: currentGameId, // Użyj zapisanej zmiennej gameId
+          sender: playerName, // Użyj nazwy gracza jako sender
+          gameId: currentGameId,
           senderTeamName,
           messageType,
         });
 
         messageInput.value = '';
       }
-
-      socket.on('turnStarted', function (data) {
-        console.log('Received turnStarted event data:', data);
-
-        // Aktualizacja informacji w interfejsie
-        if (
-          data &&
-          data.round &&
-          data.teamName &&
-          data.describer &&
-          data.wordToGuess
-        ) {
-          document.getElementById('currentRound').textContent =
-            `Current Round: ${data.round}`;
-          document.getElementById('currentTeam').textContent =
-            `Current Team: ${data.teamName}`;
-          document.getElementById('currentDescriber').textContent =
-            `Describer: ${data.describer}`;
-          document.getElementById('wordToGuess').textContent =
-            `Word to guess: ${data.wordToGuess}`;
-        } else {
-          console.warn('Received incomplete data for turnStarted:', data);
-        }
-      });
     </script>
   </head>
   <body>
@@ -136,13 +173,24 @@
               <input type="checkbox" id="isGuess" />
               <label for="isGuess">Guess Mode</label>
             </div>
+            <!-- Dodaj etykiety do pól -->
             <div class="mt-2">
+              <label for="playerName">Your Player Name</label>
+              <input
+                id="playerName"
+                class="input"
+                placeholder="Enter your player name"
+              />
+            </div>
+            <div class="mt-2">
+              <label for="senderTeamName">Your Team Name</label>
               <input
                 id="senderTeamName"
                 class="input"
                 placeholder="Enter your team name"
               />
             </div>
+
             <button class="button is-link mt-2" onclick="sendMessage()">
               Send
             </button>
