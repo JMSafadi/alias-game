@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from 'src/schemas/User.schema';
+import { User } from '../schemas/User.schema';
 import mongoose from 'mongoose';
 
 @Injectable()
@@ -10,11 +10,11 @@ export class UsersService {
 
   async getAllUsers() {
     const users = await this.userModel.find().select('-__v').exec();
-  
+
     if (users.length === 0) {
       throw new NotFoundException('No active Users.');
     }
-  
+
     return users;
   }
 
@@ -22,13 +22,13 @@ export class UsersService {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid user ID: ${id}.`);
     }
-    
+
     const user = await this.userModel.findById(id).select('-__v -_id').exec();
-    
+
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found.`);
     }
-    
+
     return user;
   }
 
