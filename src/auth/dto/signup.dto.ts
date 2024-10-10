@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { Role } from '../../modules/common/roles/role.enum';
 
 export class SignUpDto {
     @IsNotEmpty()
@@ -10,4 +11,7 @@ export class SignUpDto {
     @IsString()
     @MinLength(6)
     readonly password: string;
+
+    @IsString()
+    roles: Role;
 }
