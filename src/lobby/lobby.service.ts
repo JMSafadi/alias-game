@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Lobby } from 'src/schemas/Lobby.schema';
-import { User } from 'src/schemas/User.schema';
+import { Lobby } from '../schemas/Lobby.schema';
+import { User } from '../schemas/User.schema';
 import { CreateLobbyDto } from './dto/CreateLobby.dto';
+import { UpdateLobbyDto } from './dto/UpdateLobby.dto';
 import { JoinLobbyDto } from './dto/JoinLobby.dto';
 import { AssignTeamsDto } from './dto/AssignTeams.dto';
 import mongoose from 'mongoose';
@@ -34,6 +35,7 @@ export class LobbyService {
 
             return { //Filter and format the data to expose.
                 lobbyID: lobbyObject._id,
+                lobbyName: lobbyObject.lobbyName,
                 lobbyOwner: userMap.get(lobbyObject.ownerId.toString()),
                 playersPerTeam: lobbyObject.playersPerTeam,
                 maxPlayers: lobbyObject.maxPlayers,
@@ -67,6 +69,7 @@ export class LobbyService {
 
         return { //Filter and format the data to expose.
             lobbyOwner: userMap.get(ownerId.toString()),
+            lobbyName: lobbyObject.lobbyName,
             playersPerTeam: lobbyObject.playersPerTeam,
             maxPlayers: lobbyObject.maxPlayers,
             currentPlayers: lobbyObject.currentPlayers,
@@ -99,12 +102,13 @@ export class LobbyService {
         const maxPlayers = playersPerTeam * 2; //Lobby's capacity.
 
         const newLobby = new this.lobbyModel({
-            ownerId: ownerId, //Set the owner of the lobby.
-            playersPerTeam: playersPerTeam,  //Set the number of players per team.
+            ownerId: ownerId,
+            lobbyName: `${user.username}'s Lobby`, //Set the owner of the lobby.
+            playersPerTeam: playersPerTeam, //Set the number of players per team.
             maxPlayers: maxPlayers,
-            currentPlayers: 1,   //The owner is already in the lobby.
-            teamCount: 2,  //Set the number of teams to 2.
-            players: [{ userId: ownerId }],  //Add owner to the players list.
+            currentPlayers: 1,  //The owner is already in the lobby.
+            teamCount: 2, //Set the number of teams to 2.
+            players: [{ userId: ownerId }], //Add owner to the players list.
         });
 
         const savedLobby = await newLobby.save();
@@ -125,6 +129,35 @@ export class LobbyService {
                 username: user.username,
             })),
         };
+    }
+
+    async updateLobby(lobbyId: string, updateLobbyDto: UpdateLobbyDto): Promise<any> {
+        if (!mongoose.Types.ObjectId.isValid(lobbyId)) {
+            throw new BadRequestException(`Invalid lobby ID: ${lobbyId}.`);
+        }
+
+        const lobby = await this.lobbyModel.findById(lobbyId);
+        if (!lobby) {
+            throw new NotFoundException(`Lobby with ID ${lobbyId} not found.`);
+        }
+
+        //Ensure maxPlayers (playersPerTeam *2) is not set lower than the current number of players.
+        if ((updateLobbyDto.playersPerTeam * 2) < lobby.currentPlayers) {
+            throw new BadRequestException(`Cannot reduce players per team to ${updateLobbyDto.playersPerTeam} when there are ${lobby.currentPlayers} current players.`);
+        }
+
+        //Update lobby's infromation.
+        if (updateLobbyDto.lobbyName) {
+            lobby.lobbyName = updateLobbyDto.lobbyName;
+        }
+        if (updateLobbyDto.playersPerTeam) {
+            lobby.playersPerTeam = updateLobbyDto.playersPerTeam;
+            lobby.maxPlayers = updateLobbyDto.playersPerTeam * 2;
+        }
+
+        await lobby.save();
+
+        return { message: `Lobby's information updated successfully.` };
     }
 
     async joinLobby(joinLobbyDto: JoinLobbyDto): Promise<any> {
@@ -188,6 +221,7 @@ export class LobbyService {
         return { //Filter and format the data to expose.
             lobbyID: savedLobby._id,
             lobbyOwner: userMap.get(ownerId.toString()),
+            lobbyName: lobbyObject.lobbyName,
             playersPerTeam: lobbyObject.playersPerTeam,
             maxPlayers: lobbyObject.maxPlayers,
             currentPlayers: lobbyObject.currentPlayers,
@@ -226,18 +260,26 @@ export class LobbyService {
             throw new BadRequestException('Invalid Team Assignment: Incorrect number of players.');
         }
 
-        const playerTeamMap = new Map(); //Create a map to assign each player to their respective team.
+        //Check if the current number of players matches maxPlayers.
+        if (lobby.currentPlayers !== lobby.maxPlayers) {
+            throw new BadRequestException(`Invalid Team Assignment: The current number of players '${lobby.currentPlayers}' does not match maxPlayers '${lobby.maxPlayers}'.`);
+        }
+
+        //Create a map to assign each player to their respective team.
+        const playerTeamMap = new Map();
         assignTeamsDto.teams.forEach(team => {
             team.players.forEach(playerId => {
                 playerTeamMap.set(playerId, team.teamName);
             });
         });
 
-        lobby.players = lobby.players.map(player => { //Assign each player in the lobby to their respective team based on the map.
+        //Assign each player in the lobby to their respective team based on the map.
+        lobby.players = lobby.players.map(player => {
             return { ...player, team: playerTeamMap.get(player.userId) || '' };
         });
 
-        const users = await this.userModel.find({ _id: { $in: allPlayers } }, 'username').exec(); //Query the usernames for all players in the teams.
+        //Query the usernames for all players in the teams.
+        const users = await this.userModel.find({ _id: { $in: allPlayers } }, 'username').exec();
 
         const userMap = new Map(users.map(user => [user._id.toString(), user.username]));
 
@@ -250,7 +292,7 @@ export class LobbyService {
 
         return { //Filter and format the data to expose.
             lobbyId: lobby._id,
-            teams: teamsWithUsernames,  //Use the formatted teams with usernames.
+            teams: teamsWithUsernames,  //Show usernames instead of usersID.
             message: "Teams assigned successfully. The game is about to start!"
         };
     }

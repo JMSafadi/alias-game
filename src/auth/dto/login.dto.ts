@@ -5,8 +5,8 @@ export class LoginDto {
     @IsString()
     readonly usernameOrEmail: string;
 
-    @IsNotEmpty({ message: 'This fild is required.'})
+    @IsNotEmpty({ message: 'This fild is required.' })
     @IsString()
-    @MinLength(6, {message: 'Password must be at least 6 characters long.'})
+    @MinLength(6, { message: 'Password must be at least 6 characters long.' })
     readonly password: string;
 }

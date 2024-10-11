@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post, Delete, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param } from '@nestjs/common';
 import { LobbyService } from './lobby.service';
 import { CreateLobbyDto } from './dto/CreateLobby.dto';
+import { UpdateLobbyDto } from './dto/UpdateLobby.dto';
 import { JoinLobbyDto } from './dto/JoinLobby.dto';
 import { AssignTeamsDto } from './dto/AssignTeams.dto';
 
@@ -26,6 +27,12 @@ export class LobbyController {
         return this.lobbyService.createLobby(createLobbyDto);
     }
 
+    //Route to update an existing lobby.
+    @Put(':id')
+    async updateLobby(@Param('id') id: string, @Body() updateLobbyDto: UpdateLobbyDto) {
+        return this.lobbyService.updateLobby(id, updateLobbyDto);
+    }
+
     //Route to join an existing lobby.
     @Post('join')
     joinLobby(@Body() joinLobbyDto: JoinLobbyDto) {
@@ -43,5 +50,4 @@ export class LobbyController {
     async deleteLobby(@Param('id') id: string) {
         return this.lobbyService.deleteLobbyById(id);
     }
-
 }

@@ -74,8 +74,8 @@ curl -X 'POST'
   "username": "John Doe",
   "password": "securePassword"
 }
-
 ```
+
 **Response:**
 ```json
 {
@@ -108,8 +108,8 @@ curl -X 'POST'
   "usernameOrEmail": "johnDoe@examplemail.com",
   "password": "securePassword"
 }
-
 ```
+
 **Response:**
 ```json
 {
