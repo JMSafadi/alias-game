@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../schemas/User.schema';
 import mongoose from 'mongoose';
+import { Role } from '../modules/common/roles/role.enum';
 
 @Injectable()
 export class UsersService {

@@ -17,7 +17,7 @@ export class AuthService {
     ) { }
 
     async signUp(signUpDto: SignUpDto): Promise<{ message: string }> {
-        const { email, username, password } = signUpDto;
+        const { email, username, password, roles } = signUpDto;
         try {
 
             //Hash password.
@@ -27,6 +27,7 @@ export class AuthService {
                 email,
                 username,
                 password: hashedPassword,
+                roles
             })
 
             return {
