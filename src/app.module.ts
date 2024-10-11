@@ -10,6 +10,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LobbyModule } from './lobby/lobby.module';
 import { AuthModule } from './auth/auth.module';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './modules/common/guards/roles.guard';
 
 /**
  * The root module of the application.
@@ -68,6 +70,13 @@ import { AuthModule } from './auth/auth.module';
      * AppService provides common services, including utility methods used by AppController.
      */
     AppService,
+    /**
+     * RolesGuard provides authorizacion funcionality.
+     */
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule { }

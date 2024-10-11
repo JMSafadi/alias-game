@@ -14,11 +14,11 @@ export class LobbyController {
     return this.lobbyService.getAllLobbies();
   }
 
-  //Route to fetch a specific lobby by id.
-  @Get(':id')
-  async getLobbyById(@Param('id') lobbyId: string) {
-    return this.lobbyService.getLobbyById(lobbyId);
-  }
+    //Route to fetch a specific lobby by id.
+    @Get(':id')
+    async getLobbyById(@Param('id') id: string) {
+        return this.lobbyService.getLobbyById(id);
+    }
 
   //Route to create a new lobby.
   @Post('create')
@@ -38,9 +38,10 @@ export class LobbyController {
     return this.lobbyService.assignTeams(assignTeamsDto);
   }
 
-  //Route to delete a lobby by id.
-  @Delete(':id')
-  async deleteLobby(@Param('id') lobbyId: string) {
-    return this.lobbyService.deleteLobbyById(lobbyId);
-  }
+    //Route to delete a lobby by id.
+    @Delete(':id')
+    async deleteLobby(@Param('id') id: string) {
+        return this.lobbyService.deleteLobbyById(id);
+    }
+
 }
