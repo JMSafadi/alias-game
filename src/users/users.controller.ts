@@ -1,5 +1,4 @@
-import { Controller, Get, Delete, Param,   UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Delete, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from 'src/auth/local-auth.guard';
 import { RolesGuard } from 'src/modules/common/guards/roles.guard';
@@ -8,7 +7,7 @@ import { Roles } from 'src/modules/common/roles/roles.decorator';
 
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) { }
+  constructor(private usersService: UsersService) {}
 
   //Route to fetch all users.
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,7 +21,7 @@ export class UsersController {
   @Roles(Role.Admin)
   @Get(':id')
   async getUserById(@Param('id') id: string) {
-    return this.usersService.getUserById(id);;
+    return this.usersService.getUserById(id);
   }
 
   //Route to delete a user by ID

@@ -13,8 +13,8 @@ import { GameService } from './../services/game.service';
 import { TurnService } from '../services/turn.service';
 import { GuessWordDto } from '../dto/guess-word.dto';
 import { TimerService } from '../services/timer.service';
-import { ChatService } from '../../chat/services/chat.service';
-import { SendMessageDto } from '../../chat/dto/send-message.dto';
+import { ChatService } from '../../modules/chat/services/chat.service';
+import { SendMessageDto } from '../../modules/chat/dto/send-message.dto';
 
 @WebSocketGateway({ namespace: '/game', cors: { origin: '*' } })
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {

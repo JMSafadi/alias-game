@@ -56,19 +56,17 @@ export class LobbyService {
       };
     });
   }
+  async getLobbyById(lobbyId: string): Promise<any> {
+    if (!mongoose.Types.ObjectId.isValid(lobbyId)) {
+      throw new BadRequestException(`Invalid lobby ID: ${lobbyId}.`);
+    }
 
-    async getLobbyById(lobbyId: string): Promise<any> {
-        if (!mongoose.Types.ObjectId.isValid(lobbyId)) {
-            throw new BadRequestException(`Invalid lobby ID: ${lobbyId}.`);
-        }
-
-        const lobby = await this.lobbyModel.findById(lobbyId);
-        if (!lobby) {
-            throw new NotFoundException(`Lobby with ID ${lobbyId} not found.`);
-        }
+    const lobby = await this.lobbyModel.findById(lobbyId);
+    if (!lobby) {
+      throw new NotFoundException(`Lobby with ID ${lobbyId} not found.`);
+    }
 
     const lobbyObject = lobby.toObject();
-
     const ownerId = lobbyObject.ownerId;
     const playerIds = lobbyObject.players.map((player) => player.userId);
 
@@ -299,17 +297,14 @@ export class LobbyService {
     };
   }
 
-    async deleteLobbyById(lobbyId: string): Promise<{ message: string }> {
-        if (!mongoose.Types.ObjectId.isValid(lobbyId)) {
-            throw new BadRequestException(`Invalid lobby ID: ${lobbyId}.`);
-        }
-
-    const lobby = await this.lobbyModel.findByIdAndDelete(lobbyId);
-
-        if (!lobby) {
-            throw new NotFoundException(`Lobby with ID ${lobbyId} not found.`);
-        }
-
-        return { message: `Lobby with ID ${lobbyId} deleted successfully.` };
+  async deleteLobbyById(lobbyId: string): Promise<{ message: string }> {
+    if (!mongoose.Types.ObjectId.isValid(lobbyId)) {
+      throw new BadRequestException(`Invalid lobby ID: ${lobbyId}.`);
     }
+    const lobby = await this.lobbyModel.findByIdAndDelete(lobbyId);
+    if (!lobby) {
+      throw new NotFoundException(`Lobby with ID ${lobbyId} not found.`);
+    }
+    return { message: `Lobby with ID ${lobbyId} deleted successfully.` };
+  }
 }
