@@ -6,9 +6,9 @@ class Team {
     @IsString()
     teamName: string;
 
-    @IsArray()
-    @IsString({ each: true })
-    players: string[];
+  @IsArray()
+  @IsString({ each: true })
+  players: string[];
 }
 
 export class AssignTeamsDto {
@@ -16,8 +16,8 @@ export class AssignTeamsDto {
     @IsString()
     lobbyId: string;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => Team)
-    teams: Team[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Team)
+  teams: Team[];
 }

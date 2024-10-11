@@ -1,12 +1,9 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 import { Injectable, NotFoundException } from '@nestjs/common';
-// import * as words from './../words/words.json';
 import words from '../words/words.json';
 
 @Injectable()
 export class WordService {
-  generateWord() {
+  generateWord(): string {
     // Select random category
     const allCategories = Object.keys(words);
     const randomCategory =

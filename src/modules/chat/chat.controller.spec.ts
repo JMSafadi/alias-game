@@ -2,7 +2,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChatController } from './chat.controller';
-import { ChatService } from './chat.service';
+import { ChatService } from './services/chat.service';
 import { Message } from './schemas/message.schema';
 import { HttpException, HttpStatus } from '@nestjs/common';
 

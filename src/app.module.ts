@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UsersModule } from './users/users.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { UsersModule } from './users/users.module';
 import { GameModule } from './game/game.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -17,6 +19,19 @@ import { RolesGuard } from './modules/common/guards/roles.guard';
  */
 @Module({
   imports: [
+    /**
+     * ServeStaticModule is used to serve static files from the `public` directory.
+     * In this configuration, the module serves the file `alias-game.html` as the default entry point.
+     * This is useful for providing an HTML client that can be accessed directly in the browser.
+     * The static files are served from the `/` root path of the application.
+     */
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      serveRoot: '/',
+      serveStaticOptions: {
+        index: 'game.html',
+      },
+    }),
     /**
      * Loads environment variables into the application.
      * This module is configured to be global, meaning the environment variables will be accessible throughout the entire application.
@@ -64,4 +79,4 @@ import { RolesGuard } from './modules/common/guards/roles.guard';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
