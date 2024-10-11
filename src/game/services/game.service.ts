@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ScoreService } from './score.service';
-import { SimilarityService } from 'src/utils/similarity.service';
+import { SimilarityService } from '../../utils/similarity.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Game } from '../schemas/Game.schema';
@@ -42,10 +42,10 @@ export class GameService {
       throw new ForbiddenException('Not your team turn!');
     }
     // Verify is guess word is correct
-    console.log(game.currentTurn.wordToGuess.toLowerCase());
+    console.log(game.currentTurn.wordToGuess);
     const isCorrect = this.similarityService.checkGuess(
-      game.currentTurn.wordToGuess.toLocaleLowerCase(),
-      guessWord.toLocaleLowerCase(),
+      game.currentTurn.wordToGuess,
+      guessWord,
     );
     console.log(`Word ${guessWord} is ${isCorrect}`);
     if (isCorrect) {
