@@ -2,7 +2,7 @@ import { IsNotEmpty, IsString, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class Team {
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'This fild is required.'})
     @IsString()
     teamName: string;
 
@@ -12,7 +12,7 @@ class Team {
 }
 
 export class AssignTeamsDto {
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'This fild is required.'})
     @IsString()
     lobbyId: string;
 

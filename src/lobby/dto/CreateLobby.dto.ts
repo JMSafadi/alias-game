@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString, IsInt, Min, Max } from 'class-validator';
 
 export class CreateLobbyDto {
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'This fild is required.'})
     @IsString()
     userId: string;
 

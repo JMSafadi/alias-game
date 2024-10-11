@@ -1,11 +1,11 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class JoinLobbyDto {
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'This fild is required.'})
     @IsString()
     userId: string;
 
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'This fild is required.'})
     @IsString()
     lobbyId: string;
 }
