@@ -1,6 +1,6 @@
-import { Controller, Get, Delete, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Delete, Param, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from 'src/auth/local-auth.guard';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/common/guards/roles.guard';
 import { Role } from 'src/modules/common/roles/role.enum';
 import { Roles } from 'src/modules/common/roles/roles.decorator';
@@ -9,7 +9,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@ne
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.Admin)
