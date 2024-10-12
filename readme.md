@@ -81,6 +81,9 @@ Once you have set your environment variables, you can start the application with
 Make sure to keep your `.env` file private and not share it in version control. The `.env` file is listed in `.gitignore`  to prevent it from being tracked by Git.
 
 ## API
+The project also includes documented API using Swagger. This allows developers to explore and test endopoint directly from the Swagger UI, providing an interface for understandin the API's funcionality.  
+Visit locally: http://localhost:3000/docs
+  
 ### 1. Endpoint /auth
 #### `POST` - `/auth`
 Register new player in game with name and password. Mandatory step to play.
@@ -523,8 +526,6 @@ If guess is correct:
 | `timestamp`          |  `Date`    | Timestamp when the message was sent.                       |
 
 
-
-
 ### Game model
 | Field                | Type       | Description                                                |
 | :--------------------| :----------| :----------------------------------------------------------|
@@ -544,3 +545,9 @@ If guess is correct:
 ## Deployment
 
 ## Future Enhancements
+- **Raking system**: implement a ranking system to track and display user's score and achivements, making the game more competitive.
+  
+- **Private messaging**: enable private messages between game users.
+  
+- **Difficulty selection**: players will be allow to choose the difficulty level for the game, among other game options.
+  
