@@ -34,7 +34,7 @@ import { AuthModule } from './auth/auth.module';
      * Loads environment variables into the application.
      * This module is configured to be global, meaning the environment variables will be accessible throughout the entire application.
      */
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
 
     /**
      * Configures the connection to the MongoDB database.

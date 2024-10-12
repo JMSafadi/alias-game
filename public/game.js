@@ -167,26 +167,27 @@ function logout() {
 function initSocketConnection() {
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username');
+  const lobbyId = localStorage.getItem('lobbyId'); // Pobieramy lobbyId z localStorage
 
-  if (!token) {
-    console.warn('No token. User is not logged in.');
+  if (!token || !lobbyId) {
+    console.warn(
+      'No token or lobbyId. User is not logged in or lobby is not set.',
+    );
     return;
   }
 
-  // Updating user interface with username
+  // Aktualizujemy interfejs użytkownika z nazwą użytkownika
   document.getElementById('userEmail').textContent = username;
   document.getElementById('loginButton').style.display = 'none';
   document.getElementById('registerButton').style.display = 'none';
   document.getElementById('logoutButton').style.display = 'inline-block';
 
-  const lobbyId = localStorage.getItem('lobbyId');
-
-  // Connect to Socket.io server
+  // Łączenie się z serwerem Socket.io, dodając lobbyId jako parametr zapytania
   socket = io('http://localhost:3000/game', {
     query: { token, lobbyId },
   });
 
-  // Socket event handling
+  // Obsługa zdarzeń Socket.io
   socket.on('connect', () => {
     console.log('Connected to server.');
   });
@@ -195,12 +196,14 @@ function initSocketConnection() {
     console.log('Disconnected from server.');
   });
 
-  socket.on('gameStarted', function (data) {
+  // Zdarzenie `gameStarted`
+  socket.on('gameStarted', (data) => {
     console.log('Game started:', data);
-    currentGameId = data.game._id; // Save gameId
+    currentGameId = data.game._id; // Przechowujemy gameId
   });
 
-  socket.on('turnStarted', function (data) {
+  // Zdarzenie `turnStarted`
+  socket.on('turnStarted', (data) => {
     try {
       console.log('Received turnStarted event:', data);
       if (data) {
@@ -220,7 +223,8 @@ function initSocketConnection() {
     }
   });
 
-  socket.on('receive_message', function (data) {
+  // Zdarzenie `receive_message`
+  socket.on('receive_message', (data) => {
     console.log('Received message:', data);
     const messagesDiv = document.getElementById('messages');
 
@@ -229,6 +233,16 @@ function initSocketConnection() {
     messagesDiv.appendChild(messageElement);
 
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+
+  // Zdarzenie `gameEnded`
+  socket.on('gameEnded', (data) => {
+    alert(data.message);
+  });
+
+  // Zdarzenie `turnEnded`
+  socket.on('turnEnded', (data) => {
+    alert(data.message);
   });
 }
 
@@ -247,6 +261,7 @@ function startGame() {
     alert('Failed to connect to server. Please try again.');
   }
 }
+
 
 // Joining a Lobby
 async function joinLobby(lobbyId) {
@@ -272,11 +287,11 @@ async function joinLobby(lobbyId) {
       localStorage.setItem('lobbyId', lobbyId);
       alert('Joined lobby successfully.');
 
-      // Reconnect socket with new lobbyId
+      // Po dołączeniu do lobby, inicjuj połączenie z odpowiednim pokojem
       if (socket) {
-        socket.disconnect();
+        socket.disconnect(); // Rozłącz poprzednie połączenie
       }
-      initSocketConnection();
+      initSocketConnection(); // Zainicjuj nowe połączenie z odpowiednim `lobbyId`
     } else {
       const errorData = await response.json();
       alert(errorData.message || 'Failed to join lobby.');
@@ -286,6 +301,7 @@ async function joinLobby(lobbyId) {
     alert('An error occurred while joining the lobby.');
   }
 }
+
 
 // Function to send a message
 function sendMessage() {
@@ -300,8 +316,8 @@ function sendMessage() {
   const messageType = document.getElementById('isGuess').checked
     ? 'guess'
     : document.getElementById('isDescribe').checked
-      ? 'describe'
-      : 'chat';
+    ? 'describe'
+    : 'chat';
 
   const username = localStorage.getItem('username');
 
@@ -319,9 +335,10 @@ function sendMessage() {
     content: message,
     sender: username,
     gameId: currentGameId,
-    // You can add senderTeamName if it's available in your logic
+    lobbyId: localStorage.getItem('lobbyId'), // Dodaj `lobbyId`
     messageType,
   });
 
   messageInput.value = '';
 }
+

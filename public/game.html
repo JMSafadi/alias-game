@@ -91,36 +91,35 @@
           ></button>
         </header>
         <section class="modal-card-body">
-          <div class="field">
-            <label class="label">Username</label>
-            <div class="control">
-              <input
-                id="loginUsername"
-                class="input"
-                type="text"
-                placeholder="Enter username"
-              />
+          <form id="loginForm" onsubmit="event.preventDefault(); login();">
+            <div class="field">
+              <label class="label">Username</label>
+              <div class="control">
+                <input
+                  id="loginUsername"
+                  class="input"
+                  type="text"
+                  placeholder="Enter username"
+                />
+              </div>
             </div>
-          </div>
 
-          <div class="field">
-            <label class="label">Password</label>
-            <div class="control">
-              <input
-                id="loginPassword"
-                class="input"
-                type="password"
-                placeholder="Enter password"
-              />
+            <div class="field">
+              <label class="label">Password</label>
+              <div class="control">
+                <input
+                  id="loginPassword"
+                  class="input"
+                  type="password"
+                  placeholder="Enter password"
+                />
+              </div>
             </div>
-          </div>
 
-          <p id="loginError" class="has-text-danger"></p>
+            <p id="loginError" class="has-text-danger"></p>
+            <button class="button is-success" type="submit">Log In</button>
+          </form>
         </section>
-        <footer class="modal-card-foot">
-          <button class="button is-success" onclick="login()">Log In</button>
-          <button class="button" onclick="closeLoginModal()">Cancel</button>
-        </footer>
       </div>
     </div>
 
@@ -137,50 +136,50 @@
           ></button>
         </header>
         <section class="modal-card-body">
-          <div class="field">
-            <label class="label">Username</label>
-            <div class="control">
-              <input
-                id="registerUsername"
-                class="input"
-                type="text"
-                placeholder="Enter username"
-              />
+          <form
+            id="registerForm"
+            onsubmit="event.preventDefault(); register();"
+          >
+            <div class="field">
+              <label class="label">Username</label>
+              <div class="control">
+                <input
+                  id="registerUsername"
+                  class="input"
+                  type="text"
+                  placeholder="Enter username"
+                />
+              </div>
             </div>
-          </div>
 
-          <div class="field">
-            <label class="label">Password</label>
-            <div class="control">
-              <input
-                id="registerPassword"
-                class="input"
-                type="password"
-                placeholder="Enter password"
-              />
+            <div class="field">
+              <label class="label">Password</label>
+              <div class="control">
+                <input
+                  id="registerPassword"
+                  class="input"
+                  type="password"
+                  placeholder="Enter password"
+                />
+              </div>
             </div>
-          </div>
 
-          <div class="field">
-            <label class="label">Confirm Password</label>
-            <div class="control">
-              <input
-                id="registerConfirmPassword"
-                class="input"
-                type="password"
-                placeholder="Confirm password"
-              />
+            <div class="field">
+              <label class="label">Confirm Password</label>
+              <div class="control">
+                <input
+                  id="registerConfirmPassword"
+                  class="input"
+                  type="password"
+                  placeholder="Confirm password"
+                />
+              </div>
             </div>
-          </div>
 
-          <p id="registerError" class="has-text-danger"></p>
+            <p id="registerError" class="has-text-danger"></p>
+            <button class="button is-success" type="submit">Register</button>
+          </form>
         </section>
-        <footer class="modal-card-foot">
-          <button class="button is-success" onclick="register()">
-            Register
-          </button>
-          <button class="button" onclick="closeRegisterModal()">Cancel</button>
-        </footer>
       </div>
     </div>
 
@@ -215,7 +214,6 @@
               <input type="checkbox" id="isGuess" />
               <label for="isGuess">Guess Mode</label>
             </div>
-            <!-- Removed player name and team input fields -->
             <button class="button is-link mt-2" onclick="sendMessage()">
               Send
             </button>
@@ -240,15 +238,12 @@
 
         <!-- Game Configuration Section -->
         <div class="column">
-          <!-- Your existing game configuration code -->
           <div class="box">
             <h3 class="title is-4">Game Configuration</h3>
             <div class="mb-4">
               <label class="label">Lobby ID</label>
               <input id="lobbyId" class="input" placeholder="Enter Lobby ID" />
             </div>
-            <!-- Rest of the configuration fields -->
-            <!-- ... -->
             <button class="button is-primary mt-4" onclick="startGame()">
               Start Game
             </button>
@@ -258,6 +253,6 @@
     </div>
 
     <!-- Scripts -->
-    <script src="game.js" ></script>
+    <script src="game.js"></script>
   </body>
 </html>
