@@ -52,28 +52,27 @@ export class LobbyService {
             throw new BadRequestException(`Invalid lobby ID: ${lobbyId}.`);
         }
 
-        const lobby = await this.lobbyModel.findById(lobbyId);
+        // Use lean() to return a plain JavaScript object instead of a Mongoose document
+        const lobby = await this.lobbyModel.findById(lobbyId).lean();
         if (!lobby) {
             throw new NotFoundException(`Lobby with ID ${lobbyId} not found.`);
         }
 
-        const lobbyObject = lobby.toObject();
-
-        const ownerId = lobbyObject.ownerId;
-        const playerIds = lobbyObject.players.map(player => player.userId);
+        const ownerId = lobby.ownerId;
+        const playerIds = lobby.players.map(player => player.userId);
 
         const userIds = [ownerId, ...playerIds];
         const users = await this.userModel.find({ _id: { $in: userIds } }, 'username').exec();
 
         const userMap = new Map(users.map(user => [user._id.toString(), user.username]));
 
-        return { //Filter and format the data to expose.
+        return { // Filter and format the data to expose.
             lobbyOwner: userMap.get(ownerId.toString()),
-            lobbyName: lobbyObject.lobbyName,
-            playersPerTeam: lobbyObject.playersPerTeam,
-            maxPlayers: lobbyObject.maxPlayers,
-            currentPlayers: lobbyObject.currentPlayers,
-            players: lobbyObject.players.map(player => ({
+            lobbyName: lobby.lobbyName,
+            playersPerTeam: lobby.playersPerTeam,
+            maxPlayers: lobby.maxPlayers,
+            currentPlayers: lobby.currentPlayers,
+            players: lobby.players.map(player => ({
                 username: userMap.get(player.userId.toString()),
             })),
         };
@@ -101,7 +100,7 @@ export class LobbyService {
         const playersPerTeam = createLobbyDto.playersPerTeam;
         const maxPlayers = playersPerTeam * 2; //Lobby's capacity.
 
-        const newLobby = new this.lobbyModel({
+        const newLobby = await this.lobbyModel.create({
             ownerId: ownerId,
             lobbyName: `${user.username}'s Lobby`, //Set the owner of the lobby.
             playersPerTeam: playersPerTeam, //Set the number of players per team.
@@ -111,9 +110,7 @@ export class LobbyService {
             players: [{ userId: ownerId }], //Add owner to the players list.
         });
 
-        const savedLobby = await newLobby.save();
-
-        const lobbyObject = savedLobby.toObject();
+        const lobbyObject = newLobby.toObject();
 
         delete lobbyObject.ownerId; //Replace the ownerId with lobbyOwner (username).
         delete lobbyObject._id;
@@ -122,10 +119,8 @@ export class LobbyService {
 
         return { //Filter and format the data to expose.
             lobbyOwner: user.username,
-
             ...lobbyObject,
-
-            players: savedLobby.players.map(player => ({
+            players: newLobby.players.map(player => ({
                 username: user.username,
             })),
         };
