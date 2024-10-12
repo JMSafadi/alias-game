@@ -76,6 +76,7 @@ async function login() {
       const data = await response.json();
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', username);
+      localStorage.setItem('userId', data.userId);
 
       // Updating the user interface
       document.getElementById('userEmail').textContent = username;
@@ -124,6 +125,7 @@ async function register() {
       const data = await response.json();
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', username);
+      localStorage.setItem('userId', data.userId);
 
       // Updating the user interface
       document.getElementById('userEmail').textContent = username;
@@ -149,6 +151,7 @@ async function register() {
 function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('username');
+  localStorage.removeItem('userId');
 
   // Updating the user interface
   document.getElementById('userEmail').textContent = '';
@@ -246,6 +249,98 @@ function initSocketConnection() {
   });
 }
 
+// Function to create a new lobby
+async function createLobby() {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    alert('You must be logged in to create a lobby.');
+    return;
+  }
+
+  const playersPerTeam = document.getElementById('playersPerTeam').value;
+  const timePerTurn = document.getElementById('timePerTurn').value;
+
+  if (!playersPerTeam || !timePerTurn) {
+    alert('Please enter valid values for players per team and time per turn.');
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/lobby', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        playersPerTeam: parseInt(playersPerTeam, 10),
+        timePerTurn: parseInt(timePerTurn, 10),
+        rounds: 3, // Możesz dodać pole do wpisania liczby rund, jeśli chcesz
+        userId: localStorage.getItem('userId'), // Dodaj `userId`, który powinien być zapisany po zalogowaniu
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      alert('Lobby created successfully!');
+      localStorage.setItem('lobbyId', data.lobbyID);
+      console.log('Created Lobby:', data);
+    } else {
+      const errorData = await response.json();
+      alert(errorData.message || 'Failed to create lobby.');
+    }
+  } catch (error) {
+    console.error('Error creating lobby:', error);
+    alert('An error occurred while creating the lobby.');
+  }
+}
+
+// Function to join a lobby
+async function joinLobby() {
+  const token = localStorage.getItem('token');
+  const lobbyId = document.getElementById('lobbyId').value;
+
+  if (!token) {
+    alert('You must be logged in to join a lobby.');
+    return;
+  }
+
+  if (!lobbyId) {
+    alert('Please enter a valid Lobby ID.');
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/lobby/join', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ lobbyId, userId: localStorage.getItem('userId') }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem('lobbyId', lobbyId);
+      alert('Joined lobby successfully.');
+
+      // Reinitialize socket connection for the lobby
+      if (socket) {
+        socket.disconnect();
+      }
+      initSocketConnection();
+    } else {
+      const errorData = await response.json();
+      alert(errorData.message || 'Failed to join lobby.');
+    }
+  } catch (error) {
+    console.error('Error joining lobby:', error);
+    alert('An error occurred while joining the lobby.');
+  }
+}
+
 // Function to start the game
 function startGame() {
   const lobbyId = localStorage.getItem('lobbyId');
@@ -262,47 +357,6 @@ function startGame() {
   }
 }
 
-
-// Joining a Lobby
-async function joinLobby(lobbyId) {
-  const token = localStorage.getItem('token');
-
-  if (!token) {
-    alert('You must be logged in to join a lobby.');
-    return;
-  }
-
-  try {
-    const response = await fetch('http://localhost:3000/lobby/join', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ lobbyId }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      localStorage.setItem('lobbyId', lobbyId);
-      alert('Joined lobby successfully.');
-
-      // Po dołączeniu do lobby, inicjuj połączenie z odpowiednim pokojem
-      if (socket) {
-        socket.disconnect(); // Rozłącz poprzednie połączenie
-      }
-      initSocketConnection(); // Zainicjuj nowe połączenie z odpowiednim `lobbyId`
-    } else {
-      const errorData = await response.json();
-      alert(errorData.message || 'Failed to join lobby.');
-    }
-  } catch (error) {
-    console.error('Error joining lobby:', error);
-    alert('An error occurred while joining the lobby.');
-  }
-}
-
-
 // Function to send a message
 function sendMessage() {
   const messageInput = document.getElementById('messageInput');
@@ -312,12 +366,6 @@ function sendMessage() {
     alert('Message cannot be empty!');
     return;
   }
-
-  const messageType = document.getElementById('isGuess').checked
-    ? 'guess'
-    : document.getElementById('isDescribe').checked
-    ? 'describe'
-    : 'chat';
 
   const username = localStorage.getItem('username');
 
@@ -335,10 +383,9 @@ function sendMessage() {
     content: message,
     sender: username,
     gameId: currentGameId,
-    lobbyId: localStorage.getItem('lobbyId'), // Dodaj `lobbyId`
-    messageType,
+    lobbyId: localStorage.getItem('lobbyId'),
+    messageType: 'chat',
   });
 
   messageInput.value = '';
 }
-

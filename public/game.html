@@ -43,7 +43,7 @@
 
       <div id="navbarBasic" class="navbar-menu">
         <div class="navbar-start">
-          <!-- You can add additional menu items here -->
+          <!-- Additional menu items here if needed -->
         </div>
 
         <div class="navbar-end">
@@ -189,7 +189,6 @@
       <div class="columns">
         <!-- Chat Section -->
         <div class="column is-two-thirds">
-          <!-- Your existing chat code -->
           <div class="box">
             <h3 class="title is-4">Chat</h3>
             <div
@@ -209,15 +208,15 @@
               placeholder="Enter message"
             />
             <div class="mt-2">
-              <input type="checkbox" id="isDescribe" />
-              <label for="isDescribe">Describe Mode</label>
-              <input type="checkbox" id="isGuess" />
-              <label for="isGuess">Guess Mode</label>
+              <button class="button is-link mt-2" onclick="sendMessage()">
+                Send
+              </button>
+              <button class="button is-success mt-2 ml-2" onclick="sendGuess()">
+                Send Guess
+              </button>
             </div>
-            <button class="button is-link mt-2" onclick="sendMessage()">
-              Send
-            </button>
           </div>
+
           <!-- Game Info Section -->
           <div class="box mt-5">
             <h3 class="title is-4">Game Information</h3>
@@ -239,14 +238,95 @@
         <!-- Game Configuration Section -->
         <div class="column">
           <div class="box">
-            <h3 class="title is-4">Game Configuration</h3>
+            <h3 class="title is-4">Setup Game</h3>
+            <!-- Players per Team -->
             <div class="mb-4">
-              <label class="label">Lobby ID</label>
-              <input id="lobbyId" class="input" placeholder="Enter Lobby ID" />
+              <label class="label">Players per Team</label>
+              <input
+                id="playersPerTeam"
+                class="input"
+                type="number"
+                min="1"
+                placeholder="Enter Players per Team"
+              />
             </div>
-            <button class="button is-primary mt-4" onclick="startGame()">
+
+            <!-- Team 1 Configuration -->
+            <div class="mb-4">
+              <h4 class="subtitle is-6">Team 1</h4>
+              <input
+                id="team1Name"
+                class="input mb-2"
+                placeholder="Enter Team 1 Name"
+              />
+              <input
+                id="team1Players"
+                class="input"
+                placeholder="Enter Team 1 Players (comma separated)"
+              />
+            </div>
+
+            <!-- Team 2 Configuration -->
+            <div class="mb-4">
+              <h4 class="subtitle is-6">Team 2</h4>
+              <input
+                id="team2Name"
+                class="input mb-2"
+                placeholder="Enter Team 2 Name"
+              />
+              <input
+                id="team2Players"
+                class="input"
+                placeholder="Enter Team 2 Players (comma separated)"
+              />
+            </div>
+
+            <!-- Number of Rounds -->
+            <div class="mb-4">
+              <label class="label">Rounds</label>
+              <input
+                id="rounds"
+                class="input"
+                type="number"
+                min="1"
+                max="10"
+                placeholder="Enter Number of Rounds"
+              />
+            </div>
+
+            <!-- Time per Turn -->
+            <div class="mb-4">
+              <label class="label">Time per Turn (seconds)</label>
+              <input
+                id="timePerTurn"
+                class="input"
+                type="number"
+                min="10"
+                max="120"
+                placeholder="Enter Time per Turn"
+              />
+            </div>
+
+            <!-- Create and Join Lobby Buttons -->
+            <button class="button is-primary mt-4" onclick="createLobby()">
+              Create Lobby
+            </button>
+            <button class="button is-link mt-4" onclick="joinLobby()">
+              Join Lobby
+            </button>
+
+            <!-- Start Game Button -->
+            <button class="button is-warning mt-4" onclick="startGame()">
               Start Game
             </button>
+          </div>
+
+          <!-- Lobby Information Section -->
+          <div class="box mt-5">
+            <h3 class="title is-4">Lobby Information</h3>
+            <div id="lobbyInfo">
+              <!-- Information about the lobby, such as players and owner, will be displayed here -->
+            </div>
           </div>
         </div>
       </div>
