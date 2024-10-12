@@ -7,11 +7,12 @@ import { Roles } from 'src/modules/common/roles/roles.decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('users')
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) { }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.Admin)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users' })
@@ -22,7 +23,7 @@ export class UsersController {
     return this.usersService.getAllUsers();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.Admin)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user by ID' })
@@ -36,7 +37,7 @@ export class UsersController {
   }
 
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.Admin)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a user by ID' })
