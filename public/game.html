@@ -4,151 +4,193 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Alias Game</title>
+    <!-- Bulma CSS -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css"
     />
+    <!-- Font Awesome for Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <!-- Socket.io -->
     <script
       src="https://cdn.socket.io/4.3.2/socket.io.min.js"
       integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs"
       crossorigin="anonymous"
     ></script>
-    <script>
-      const socket = io('http://localhost:3000/game'); // Inicjalizacja socket
-
-      let currentGameId; // Zmienna, która przechowuje aktualny gameId po utworzeniu gry
-
-      socket.on('connect', () => {
-        console.log('Połączono z serwerem.');
-      });
-
-      socket.on('disconnect', () => {
-        console.log('Rozłączono z serwerem.');
-      });
-
-      socket.on('gameStarted', function (data) {
-        console.log('Game started:', data);
-        currentGameId = data.game._id; // Zapisz gameId do zmiennej
-      });
-
-      // Nasłuch na `turnStarted`, aby zaktualizować UI
-      socket.on('turnStarted', function (data) {
-        try {
-          console.log('Received turnStarted event data:', data);
-          console.log('data.round:', data.round);
-          console.log('data.teamName:', data.teamName);
-          console.log('data.describer:', data.describer);
-          console.log('data.wordToGuess:', data.wordToGuess);
-          if (data) {
-            document.getElementById('currentRound').textContent =
-              `Current Round: ${data.round}`;
-            document.getElementById('currentTeam').textContent =
-              `Current Team: ${data.teamName}`;
-            document.getElementById('currentDescriber').textContent =
-              `Describer: ${data.describer}`;
-            document.getElementById('wordToGuess').textContent =
-              `Word to guess: ${data.wordToGuess}`;
-          } else {
-            console.warn('Received empty data for turnStarted event.');
-          }
-        } catch (error) {
-          console.error('Error in turnStarted event handler:', error);
-        }
-      });
-
-      // Nasłuchuj zdarzeń 'receive_message', aby dodać wiadomości do czatu
-      socket.on('receive_message', function (data) {
-        console.log('Received message:', data); // Loguj dane, aby upewnić się, że są odbierane
-        const messagesDiv = document.getElementById('messages');
-
-        // Tworzenie nowego elementu, który reprezentuje wiadomość
-        const messageElement = document.createElement('div');
-        messageElement.textContent = `[${data.senderTeamName}] ${data.sender}: ${data.content}`;
-        messagesDiv.appendChild(messageElement);
-
-        // Automatyczne przewijanie do ostatniej wiadomości
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      });
-
-      function startGame() {
-        const lobbyId = document.getElementById('lobbyId').value;
-        const team1Name = document.getElementById('team1Name').value;
-        const team1Players = document
-          .getElementById('team1Players')
-          .value.split(',')
-          .map((player) => player.trim());
-        const team2Name = document.getElementById('team2Name').value;
-        const team2Players = document
-          .getElementById('team2Players')
-          .value.split(',')
-          .map((player) => player.trim());
-        const rounds = parseInt(document.getElementById('rounds').value);
-        const timePerTurn = parseInt(
-          document.getElementById('timePerTurn').value,
-        );
-
-        // Upewnij się, że socket jest połączony
-        if (socket.connected) {
-          socket.emit('startGame', {
-            lobbyId,
-            teamsInfo: [
-              { teamName: team1Name, players: team1Players },
-              { teamName: team2Name, players: team2Players },
-            ],
-            rounds,
-            timePerTurn,
-          });
-        } else {
-          alert('Nie udało się połączyć z serwerem. Spróbuj ponownie.');
-        }
-      }
-
-      function sendMessage() {
-        const messageInput = document.getElementById('messageInput');
-        const message = messageInput ? messageInput.value : '';
-
-        if (!message) {
-          alert('Message cannot be empty!');
-          return;
-        }
-
-        const messageType = document.getElementById('isGuess').checked
-          ? 'guess'
-          : document.getElementById('isDescribe').checked
-            ? 'describe'
-            : 'chat';
-
-        const senderTeamName = document
-          .getElementById('senderTeamName')
-          .value.trim();
-        const playerName = document.getElementById('playerName').value.trim();
-
-        if (!senderTeamName || !playerName) {
-          alert('Please enter your Team Name and Player Name!');
-          return;
-        }
-
-        // Logowanie dla weryfikacji
-        console.log('Sending message with playerName:', playerName);
-        console.log('Sending message with senderTeamName:', senderTeamName);
-
-        socket.emit('send_message', {
-          content: message,
-          sender: playerName, // Użyj nazwy gracza jako sender
-          gameId: currentGameId,
-          senderTeamName,
-          messageType,
-        });
-
-        messageInput.value = '';
-      }
-    </script>
   </head>
   <body>
+    <!-- Navbar -->
+    <nav class="navbar is-light">
+      <div class="navbar-brand">
+        <a class="navbar-item" href="#">
+          <strong>Alias Game</strong>
+        </a>
+        <a
+          role="button"
+          class="navbar-burger"
+          aria-label="menu"
+          aria-expanded="false"
+          data-target="navbarBasic"
+        >
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <div id="navbarBasic" class="navbar-menu">
+        <div class="navbar-start">
+          <!-- You can add additional menu items here -->
+        </div>
+
+        <div class="navbar-end">
+          <div class="navbar-item">
+            <div id="userEmail" class="mr-2"></div>
+            <div class="buttons">
+              <button
+                id="registerButton"
+                class="button is-light"
+                onclick="openRegisterModal()"
+              >
+                Register
+              </button>
+              <button
+                id="loginButton"
+                class="button is-primary"
+                onclick="openLoginModal()"
+              >
+                <strong>Log In</strong>
+              </button>
+              <button
+                id="logoutButton"
+                class="button is-light"
+                onclick="logout()"
+                style="display: none"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+      <div class="modal-background" onclick="closeLoginModal()"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Login</p>
+          <button
+            class="delete"
+            aria-label="close"
+            onclick="closeLoginModal()"
+          ></button>
+        </header>
+        <section class="modal-card-body">
+          <div class="field">
+            <label class="label">Username</label>
+            <div class="control">
+              <input
+                id="loginUsername"
+                class="input"
+                type="text"
+                placeholder="Enter username"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Password</label>
+            <div class="control">
+              <input
+                id="loginPassword"
+                class="input"
+                type="password"
+                placeholder="Enter password"
+              />
+            </div>
+          </div>
+
+          <p id="loginError" class="has-text-danger"></p>
+        </section>
+        <footer class="modal-card-foot">
+          <button class="button is-success" onclick="login()">Log In</button>
+          <button class="button" onclick="closeLoginModal()">Cancel</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div id="registerModal" class="modal">
+      <div class="modal-background" onclick="closeRegisterModal()"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Register</p>
+          <button
+            class="delete"
+            aria-label="close"
+            onclick="closeRegisterModal()"
+          ></button>
+        </header>
+        <section class="modal-card-body">
+          <div class="field">
+            <label class="label">Username</label>
+            <div class="control">
+              <input
+                id="registerUsername"
+                class="input"
+                type="text"
+                placeholder="Enter username"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Password</label>
+            <div class="control">
+              <input
+                id="registerPassword"
+                class="input"
+                type="password"
+                placeholder="Enter password"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Confirm Password</label>
+            <div class="control">
+              <input
+                id="registerConfirmPassword"
+                class="input"
+                type="password"
+                placeholder="Confirm password"
+              />
+            </div>
+          </div>
+
+          <p id="registerError" class="has-text-danger"></p>
+        </section>
+        <footer class="modal-card-foot">
+          <button class="button is-success" onclick="register()">
+            Register
+          </button>
+          <button class="button" onclick="closeRegisterModal()">Cancel</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Main Content -->
     <div class="container mt-5">
+      <!-- The rest of your content -->
       <div class="columns">
-        <!-- Main Chat Section -->
+        <!-- Chat Section -->
         <div class="column is-two-thirds">
+          <!-- Your existing chat code -->
           <div class="box">
             <h3 class="title is-4">Chat</h3>
             <div
@@ -173,31 +215,14 @@
               <input type="checkbox" id="isGuess" />
               <label for="isGuess">Guess Mode</label>
             </div>
-            <!-- Dodaj etykiety do pól -->
-            <div class="mt-2">
-              <label for="playerName">Your Player Name</label>
-              <input
-                id="playerName"
-                class="input"
-                placeholder="Enter your player name"
-              />
-            </div>
-            <div class="mt-2">
-              <label for="senderTeamName">Your Team Name</label>
-              <input
-                id="senderTeamName"
-                class="input"
-                placeholder="Enter your team name"
-              />
-            </div>
-
+            <!-- Removed player name and team input fields -->
             <button class="button is-link mt-2" onclick="sendMessage()">
               Send
             </button>
           </div>
-          <!-- Word to Guess Section -->
+          <!-- Game Info Section -->
           <div class="box mt-5">
-            <h3 class="title is-4">Game Info</h3>
+            <h3 class="title is-4">Game Information</h3>
             <div id="currentRound" class="has-text-weight-bold mb-3">
               Current Round:
             </div>
@@ -208,59 +233,22 @@
               Describer:
             </div>
             <div id="wordToGuess" class="has-text-weight-bold mb-3">
-              Word to guess:
+              Word to Guess:
             </div>
           </div>
         </div>
 
-        <!-- Setup Game Section -->
+        <!-- Game Configuration Section -->
         <div class="column">
+          <!-- Your existing game configuration code -->
           <div class="box">
-            <h3 class="title is-4">Setup Game</h3>
+            <h3 class="title is-4">Game Configuration</h3>
             <div class="mb-4">
               <label class="label">Lobby ID</label>
-              <input id="lobbyId" class="input" placeholder="Enter lobby ID" />
+              <input id="lobbyId" class="input" placeholder="Enter Lobby ID" />
             </div>
-            <div class="mb-4">
-              <h4 class="subtitle is-6">Team 1</h4>
-              <input
-                id="team1Name"
-                class="input mb-2"
-                placeholder="Enter team 1 name"
-              />
-              <input
-                id="team1Players"
-                class="input"
-                placeholder="Enter team 1 players (comma separated)"
-              />
-            </div>
-            <div class="mb-4">
-              <h4 class="subtitle is-6">Team 2</h4>
-              <input
-                id="team2Name"
-                class="input mb-2"
-                placeholder="Enter team 2 name"
-              />
-              <input
-                id="team2Players"
-                class="input"
-                placeholder="Enter team 2 players (comma separated)"
-              />
-            </div>
-            <div class="mb-4">
-              <label class="label">Rounds</label>
-              <input id="rounds" class="input" type="number" min="1" max="10" />
-            </div>
-            <div class="mb-4">
-              <label class="label">Time per Turn (seconds)</label>
-              <input
-                id="timePerTurn"
-                class="input"
-                type="number"
-                min="30"
-                max="120"
-              />
-            </div>
+            <!-- Rest of the configuration fields -->
+            <!-- ... -->
             <button class="button is-primary mt-4" onclick="startGame()">
               Start Game
             </button>
@@ -268,5 +256,8 @@
         </div>
       </div>
     </div>
+
+    <!-- Scripts -->
+    <script src="game.js" ></script>
   </body>
 </html>

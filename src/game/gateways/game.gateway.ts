@@ -8,23 +8,28 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { StartGameDto } from '../dto/start-game.dto';
+// Removed unused import of StartGameDto
 import { GameService } from './../services/game.service';
 import { TurnService } from '../services/turn.service';
 import { TimerService } from '../services/timer.service';
 import { MessageService } from '../services/message.service';
+import { LobbyService } from 'src/lobby/lobby.service';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { TurnStartedDto } from '../dto/turn-started.dto';
 import { SimilarityService } from 'src/utils/similarity.service';
 import { Game } from '../schemas/Game.schema';
+import { UseGuards } from '@nestjs/common';
+import { WsJwtAuthGuard } from 'src/auth/ws-jwt-auth.guard';
 
 @WebSocketGateway({ namespace: '/game', cors: { origin: '*' } })
+@UseGuards(WsJwtAuthGuard)
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   public server: Server;
 
   constructor(
     private readonly gameService: GameService,
+    private readonly lobbyService: LobbyService,
     private readonly turnService: TurnService,
     private readonly timerService: TimerService,
     private readonly messageService: MessageService,
@@ -32,7 +37,25 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   handleConnection(client: Socket): void {
-    console.log(`Client connected: ${client.id}`);
+    const user = client.data.user;
+
+    if (user && typeof user === 'object') {
+      console.log(`Client connected: ${client.id}, User: ${user.username}`);
+    } else {
+      console.warn(
+        `Client connected: ${client.id}, but user data is missing or invalid.`,
+      );
+    }
+
+    // Extract lobbyId from client query parameters
+    const lobbyId = client.handshake.query.lobbyId as string;
+
+    if (lobbyId) {
+      client.join(`lobby_${lobbyId}`);
+      console.log(`Client ${client.id} joined room lobby_${lobbyId}`);
+    } else {
+      console.warn(`Client ${client.id} did not provide a lobbyId`);
+    }
   }
 
   handleDisconnect(client: Socket): void {
@@ -41,122 +64,102 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('send_message')
   async handleMessage(
-    @MessageBody() messageBody: string | SendMessageDto,
+    @MessageBody() messageBody: SendMessageDto,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    let sendMessageDto: SendMessageDto;
-
     try {
-      if (typeof messageBody === 'string') {
-        sendMessageDto = JSON.parse(messageBody);
-        if (sendMessageDto.timestamp) {
-          sendMessageDto.timestamp = new Date(sendMessageDto.timestamp);
-        }
-      } else {
-        sendMessageDto = messageBody;
-      }
+      const sendMessageDto = messageBody;
 
       console.log('Received message from client:', sendMessageDto);
-      console.log('Received message from client:');
-      console.log('Content:', sendMessageDto.content);
-      console.log('Sender:', sendMessageDto.sender);
-      console.log('Sender Team Name:', sendMessageDto.senderTeamName);
-      console.log('Message Type:', sendMessageDto.messageType);
 
-      // Pobierz rolę gracza na podstawie aktualnego stanu gry
+      // Get the player's role based on the current game state
       const role = await this.gameService.getPlayerRole(
         sendMessageDto.gameId,
         sendMessageDto.sender,
       );
       sendMessageDto.role = role;
 
-      // Logi do weryfikacji ról
-      console.log('Comparing playerId:', sendMessageDto.sender);
-      console.log(
-        'Describer:',
-        (await this.gameService.getGameById(sendMessageDto.gameId)).currentTurn
-          .describer,
-      );
-      console.log(
-        'Guessers:',
-        (await this.gameService.getGameById(sendMessageDto.gameId)).currentTurn
-          .guessers,
-      );
-
-      switch (sendMessageDto.messageType) {
-        case 'describe':
-          if (sendMessageDto.role !== 'describer') {
-            client.emit('error', { message: 'Only describers can describe!' });
-            return;
-          }
-          break;
-
-        case 'guess':
-          if (sendMessageDto.role !== 'guesser') {
-            client.emit('error', { message: 'Only guessers can guess!' });
-            return;
-          }
-          break;
-
-        case 'chat':
-        default:
-          break;
+      // Validate permissions
+      if (
+        !this.hasPermissionToSendMessage(
+          role,
+          sendMessageDto.messageType,
+          await this.gameService.getGameById(sendMessageDto.gameId),
+          sendMessageDto.sender,
+        )
+      ) {
+        client.emit('error', {
+          message: 'You do not have permission to send this message.',
+        });
+        return;
       }
 
       // Save and broadcast the message
       const message = await this.messageService.saveMessage(sendMessageDto);
-      this.server.emit('receive_message', message);
+      this.server
+        .to(`lobby_${message.lobbyId}`)
+        .emit('receive_message', message);
     } catch (error) {
       console.error('Error handling message:', error);
       client.emit('error', { message: 'Failed to handle message' });
     }
   }
 
-  // Event to init game
   @SubscribeMessage('startGame')
   async handleStartGame(
-    @MessageBody() startGameDto: StartGameDto,
-    @ConnectedSocket() _client: Socket,
+    @MessageBody() data: { lobbyId: string },
+    @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    console.log('Received startGame event from client:', _client.id);
-    const game = await this.gameService.startGame(startGameDto);
-    this.server.emit('gameStarted', { message: 'Game started!', game });
-    // Init new game state with first turn
-    const updatedGame = await this.turnService.startTurn({
-      gameId: game._id.toString(),
-      teamName: game.teamsInfo[0].teamName,
-    });
-    // Emit start turn event
-    console.log('Emitting turnStarted event with data:');
-    console.log('teamName:', updatedGame.currentTurn.teamName);
-    console.log('describer:', updatedGame.currentTurn.describer);
-    console.log('wordToGuess:', updatedGame.currentTurn.wordToGuess);
+    try {
+      const lobby = await this.lobbyService.getLobbyById(data.lobbyId);
 
-    this.server.emit(
-      'turnStarted',
-      new TurnStartedDto({
-        message: `Turn started for team: ${updatedGame.currentTurn.teamName}. ${updatedGame.currentTurn.describer} is the describer!`,
-        round: updatedGame.currentRound,
-        turn: updatedGame.playingTurn,
-        time: updatedGame.timePerTurn,
-        wordToGuess: updatedGame.currentTurn.wordToGuess,
-        teamName: updatedGame.currentTurn.teamName,
-        describer: updatedGame.currentTurn.describer,
-      }),
-    );
+      if (!lobby) {
+        client.emit('error', { message: 'Lobby not found' });
+        return;
+      }
 
-    // Start timeout for first turn
-    this.startTurnTimer(updatedGame);
+      // Initialize the game with data from the lobby
+      const game = await this.gameService.startGameFromLobby(lobby);
+
+      // Emit game started event to the lobby room
+      this.server.to(`lobby_${lobby.lobbyID}`).emit('gameStarted', { game });
+
+      // Initialize the first turn
+      const updatedGame = await this.turnService.startTurn({
+        gameId: game._id.toString(),
+        teamName: game.teamsInfo[0].teamName,
+      });
+
+      // Emit turnStarted event
+      this.server.to(`lobby_${lobby.lobbyID}`).emit(
+        'turnStarted',
+        new TurnStartedDto({
+          message: `Turn started for team: ${updatedGame.currentTurn.teamName}. ${updatedGame.currentTurn.describer} is the describer!`,
+          round: updatedGame.currentRound,
+          turn: updatedGame.playingTurn,
+          time: updatedGame.timePerTurn,
+          wordToGuess: updatedGame.currentTurn.wordToGuess,
+          teamName: updatedGame.currentTurn.teamName,
+          describer: updatedGame.currentTurn.describer,
+        }),
+      );
+
+      // Start turn timer
+      this.startTurnTimer(updatedGame, lobby.lobbyID);
+    } catch (error) {
+      console.error('Error starting game:', error);
+      client.emit('error', { message: 'Failed to start game' });
+    }
   }
 
-  // Method to init timer
-  private startTurnTimer(game: Game): void {
+  // Updated startTurnTimer to accept lobbyId
+  private startTurnTimer(game: Game, lobbyId: string): void {
     this.timerService.startTimer(
       game._id.toString(),
       game.timePerTurn,
       async () => {
         const turn = await this.turnService.endTurn(game._id.toString());
-        this.server.emit('turnEnded', {
+        this.server.to(`lobby_${lobbyId}`).emit('turnEnded', {
           message: `Turn ended due to timeout for ${turn.currentTurn.teamName}. The word was: ${turn.currentTurn.wordToGuess}`,
         });
 
@@ -182,19 +185,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             endGameMessage = `Game over! The winner is ${winningTeams[0].teamName} with ${maxScore} score. Congratulations!`;
           }
           // Emit game ended event
-          this.server.emit('gameEnded', {
+          this.server.to(`lobby_${lobbyId}`).emit('gameEnded', {
             message: endGameMessage,
           });
           console.log('Game Ended.');
         } else {
-          // Dodaj logi
-          console.log('Emitting turnStarted event with data:');
-          console.log('teamName:', nextTurn.currentTurn.teamName);
-          console.log('describer:', nextTurn.currentTurn.describer);
-          console.log('wordToGuess:', nextTurn.currentTurn.wordToGuess);
-
-          // Emituj zdarzenie turnStarted z użyciem TurnStartedDto
-          this.server.emit(
+          // Emit turnStarted event with TurnStartedDto
+          this.server.to(`lobby_${lobbyId}`).emit(
             'turnStarted',
             new TurnStartedDto({
               message: `Turn started for team: ${nextTurn.currentTurn.teamName}. ${nextTurn.currentTurn.describer} is the describer!`,
@@ -206,13 +203,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
               describer: nextTurn.currentTurn.describer,
             }),
           );
-          this.startTurnTimer(nextTurn);
+          this.startTurnTimer(nextTurn, lobbyId);
         }
       },
     );
   }
 
-  // New method to check user permissions
+  // Method to check user permissions
   private hasPermissionToSendMessage(
     role: string,
     messageType: string,

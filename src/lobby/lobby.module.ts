@@ -12,5 +12,6 @@ import { LobbyController } from './lobby.controller';
   ],
   controllers: [LobbyController],
   providers: [LobbyService],
+  exports: [LobbyService],
 })
 export class LobbyModule {}

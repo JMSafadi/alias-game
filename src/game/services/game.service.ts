@@ -1,4 +1,3 @@
-import { StartGameDto } from '../dto/start-game.dto';
 import {
   BadRequestException,
   ForbiddenException,
@@ -11,6 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { Game } from '../schemas/Game.schema';
 import { SendMessageDto } from '../dto/send-message.dto';
+import { Lobby } from 'src/schemas/Lobby.schema';
 
 interface CheckWordGuessResponse {
   correct: boolean;
@@ -25,10 +25,36 @@ export class GameService {
     private readonly similarityService: SimilarityService,
   ) {}
 
-  async startGame(startGameDto: StartGameDto): Promise<Game> {
-    // Create a new game instances using DTO
-    const newGame = new this.gameModel(startGameDto);
-    // Save in database
+  // Remove the startGame method that uses StartGameDto
+  // async startGame(startGameDto: StartGameDto): Promise<Game> {
+  //   // Create a new game instance using DTO
+  //   const newGame = new this.gameModel(startGameDto);
+  //   // Save in database
+  //   return await newGame.save();
+  // }
+
+  // Add the new method to start a game from lobby data
+  async startGameFromLobby(lobby: Lobby): Promise<Game> {
+    // Extract team and player information from the lobby
+    const teamsInfo = lobby.teams.map((team) => ({
+      teamName: team.teamName,
+      players: team.players,
+      score: 0,
+    }));
+
+    // Initialize the game object using lobby settings
+    const newGame = new this.gameModel({
+      teamsInfo,
+      currentRound: 1,
+      rounds: lobby.rounds,
+      timePerTurn: lobby.timePerTurn,
+      currentTurn: null,
+      playingTurn: 0,
+      isGameActive: true,
+      // Any other necessary game properties
+    });
+
+    // Save the game to the database
     return await newGame.save();
   }
 
@@ -46,10 +72,6 @@ export class GameService {
   async getPlayerRole(gameId: string, playerId: string): Promise<string> {
     const game = await this.getGameById(gameId);
 
-    console.log('Comparing playerId:', playerId);
-    console.log('Describer:', game.currentTurn.describer);
-    console.log('Guessers:', game.currentTurn.guessers);
-
     if (game.currentTurn && game.currentTurn.describer === playerId) {
       return 'describer';
     }
@@ -66,38 +88,36 @@ export class GameService {
   ): Promise<CheckWordGuessResponse> {
     const { gameId, senderTeamName, content } = sendMessageDto;
 
-    // Pobranie gry na podstawie gameId
+    // Retrieve the game based on gameId
     const game = await this.getGameById(gameId);
 
-    // Weryfikacja, czy aktualna drużyna ma prawo zgadywać
+    // Verify if the current team has the right to guess
     if (game.currentTurn.teamName !== senderTeamName) {
       throw new ForbiddenException('Not your team turn!');
     }
 
-    // Weryfikacja, czy zgadywane słowo jest poprawne
-    console.log(`Target word: ${game.currentTurn.wordToGuess.toLowerCase()}`);
+    // Check if the guessed word is correct
     const isCorrect = this.similarityService.checkGuess(
       game.currentTurn.wordToGuess.toLocaleLowerCase(),
       content.toLocaleLowerCase(),
     );
-    console.log(`Word guessed (${content}) is correct: ${isCorrect}`);
 
     if (isCorrect) {
-      // Obliczenie wyniku na podstawie pozostałego czasu
+      // Calculate the score based on remaining time
       const currentTime = Date.now();
       const elapsedTime = (currentTime - game.currentTurnStartTime) / 1000;
 
-      // Obliczenie wyniku z pozostałym czasem
+      // Calculate the score with the remaining time
       const score = this.scoreService.calculateScore(game, elapsedTime);
 
-      // Dodanie punktów do drużyny, zapisanie stanu gry
+      // Add points to the team, save the game state
       this.scoreService.updateTeamScore(game, senderTeamName, score);
       game.currentTurn.isTurnActive = false;
 
       await game.save();
       return { correct: true, score };
     } else {
-      // Odjęcie punktów za błędne zgadnięcie
+      // Deduct points for incorrect guess
       this.scoreService.updateTeamScore(game, senderTeamName, -5);
       await game.save();
       return { correct: false };

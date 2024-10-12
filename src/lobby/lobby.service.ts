@@ -123,6 +123,8 @@ export class LobbyService {
       maxPlayers: maxPlayers,
       currentPlayers: 1, //The owner is already in the lobby.
       teamCount: 2, //Set the number of teams to 2.
+      rounds: createLobbyDto.rounds,
+      timePerTurn: createLobbyDto.timePerTurn,
       players: [{ userId: ownerId }], //Add owner to the players list.
     });
 
@@ -224,14 +226,14 @@ export class LobbyService {
   }
 
   async assignTeams(assignTeamsDto: AssignTeamsDto): Promise<any> {
-    //Check if the provided lobby ID is valid.
+    // **1. Validate the provided lobby ID**
     if (!mongoose.Types.ObjectId.isValid(assignTeamsDto.lobbyId)) {
       throw new BadRequestException(
         `Invalid lobby ID: ${assignTeamsDto.lobbyId}.`,
       );
     }
 
-    //Find the lobby by its ID.
+    // **2. Find the lobby by its ID**
     const lobby = await this.lobbyModel.findById(assignTeamsDto.lobbyId);
     if (!lobby) {
       throw new NotFoundException(
@@ -239,13 +241,13 @@ export class LobbyService {
       );
     }
 
-    //Extract all player IDs from the teams in assignTeamsDto.
+    // **3. Extract all player IDs from the teams in `assignTeamsDto`**
     const allPlayers = assignTeamsDto.teams.flatMap((team) => team.players);
 
-    //Get the IDs of all players currently in the lobby.
+    // **4. Get the IDs of all players currently in the lobby**
     const lobbyPlayerIds = lobby.players.map((player) => player.userId);
 
-    //Check if there are any players in assignTeamsDto who are not in the lobby.
+    // **5. Check if any players in `assignTeamsDto` are not in the lobby**
     const missingPlayers = allPlayers.filter(
       (playerId) => !lobbyPlayerIds.includes(playerId),
     );
@@ -255,14 +257,15 @@ export class LobbyService {
       );
     }
 
-    //Check if the number of players in the teams matches the number of players in the lobby.
+    // **6. Check if the number of players in the teams matches the number in the lobby**
     if (allPlayers.length !== lobby.currentPlayers) {
       throw new BadRequestException(
         'Invalid Team Assignment: Incorrect number of players.',
       );
     }
 
-    const playerTeamMap = new Map(); //Create a map to assign each player to their respective team.
+    // **7. Assign players to their respective teams**
+    const playerTeamMap = new Map();
     assignTeamsDto.teams.forEach((team) => {
       team.players.forEach((playerId) => {
         playerTeamMap.set(playerId, team.teamName);
@@ -270,13 +273,23 @@ export class LobbyService {
     });
 
     lobby.players = lobby.players.map((player) => {
-      //Assign each player in the lobby to their respective team based on the map.
       return { ...player, team: playerTeamMap.get(player.userId) || '' };
     });
 
+    // **8. Update `rounds` and `timePerTurn`**
+    lobby.rounds = assignTeamsDto.rounds;
+    lobby.timePerTurn = assignTeamsDto.timePerTurn;
+
+    // **9. Save the teams in the lobby**
+    lobby.teams = assignTeamsDto.teams.map((team) => ({
+      teamName: team.teamName,
+      players: team.players,
+    }));
+
+    // **10. Fetch usernames for all players in the teams**
     const users = await this.userModel
       .find({ _id: { $in: allPlayers } }, 'username')
-      .exec(); //Query the usernames for all players in the teams.
+      .exec();
 
     const userMap = new Map(
       users.map((user) => [user._id.toString(), user.username]),
@@ -286,16 +299,16 @@ export class LobbyService {
       teamName: team.teamName,
       players: team.players.map(
         (playerId) => userMap.get(playerId.toString()) || playerId,
-      ), //Replace userId with username.
+      ),
     }));
 
+    // **11. Save the updated lobby**
     await lobby.save();
 
     return {
-      //Filter and format the data to expose.
       lobbyId: lobby._id,
-      teams: teamsWithUsernames, //Use the formatted teams with usernames.
-      message: 'Teams assigned successfully. The game is about to start!',
+      teams: teamsWithUsernames,
+      message: 'Teams assigned successfully. The game is ready to start!',
     };
   }
 

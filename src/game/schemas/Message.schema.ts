@@ -42,6 +42,13 @@ export class Message {
   role?: string;
 
   /**
+   * The identifier of the lobby where the message was sent.
+   * @type {string}
+   */
+  @Prop({ required: true })
+  lobbyId: string;
+
+  /**
    * The timestamp when the message was sent.
    * Defaults to the current date and time.
    * @type {Date}

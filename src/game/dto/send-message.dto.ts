@@ -25,6 +25,11 @@ export class SendMessageDto {
   role?: string;
 
   @IsString()
-  @IsNotEmpty() // Dodanie gameId
+  @IsNotEmpty()
   gameId: string;
+
+  // Dodanie właściwości lobbyId
+  @IsString()
+  @IsNotEmpty()
+  lobbyId: string;
 }
