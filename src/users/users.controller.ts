@@ -37,7 +37,7 @@ export class UsersController {
   }
 
 
-  //Route to update a specific user's information.
+  @UseGuards(RolesGuard)
   @Put(':id')
   async updateUser(
     @Param('id') id: string,

@@ -7,6 +7,7 @@ import { SignUpDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcryptjs';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Role } from '../modules/common/roles/role.enum';
 
 jest.mock('bcryptjs', () => ({
     hash: jest.fn().mockResolvedValue('hashedPassword'),
@@ -58,6 +59,7 @@ describe('AuthService', () => {
                 email: 'newuser@example.com',
                 username: 'newuser',
                 password: 'password123',
+                roles: Role.User,
             };
 
             jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword');
@@ -74,6 +76,7 @@ describe('AuthService', () => {
                 email: 'newuser@example.com',
                 username: 'newuser',
                 password: 'password123',
+                roles: Role.User,
             };
 
             userModel.create.mockRejectedValue({
@@ -91,6 +94,7 @@ describe('AuthService', () => {
                 email: 'newuser@example.com',
                 username: 'newuser',
                 password: 'password123',
+                roles: Role.User,
             };
 
             userModel.create.mockRejectedValue({

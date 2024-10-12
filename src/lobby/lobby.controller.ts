@@ -32,7 +32,7 @@ export class LobbyController {
   //Route to update an existing lobby.
   @Put(':id')
   async updateLobby(@Param('id') id: string, @Body() updateLobbyDto: UpdateLobbyDto) {
-      return this.lobbyService.updateLobby(id, updateLobbyDto);
+    return this.lobbyService.updateLobby(id, updateLobbyDto);
   }
 
   /**
