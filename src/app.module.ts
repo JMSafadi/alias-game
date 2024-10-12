@@ -18,6 +18,11 @@ import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     /**
+     * Loads environment variables into the application.
+     * This module is configured to be global, meaning the environment variables will be accessible throughout the entire application.
+     */
+    ConfigModule.forRoot({ isGlobal: true }),
+    /**
      * ServeStaticModule is used to serve static files from the `public` directory.
      * In this configuration, the module serves the file `alias-game.html` as the default entry point.
      * This is useful for providing an HTML client that can be accessed directly in the browser.
@@ -30,11 +35,6 @@ import { AuthModule } from './auth/auth.module';
         index: 'game.html',
       },
     }),
-    /**
-     * Loads environment variables into the application.
-     * This module is configured to be global, meaning the environment variables will be accessible throughout the entire application.
-     */
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
 
     /**
      * Configures the connection to the MongoDB database.
