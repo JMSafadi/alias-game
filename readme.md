@@ -182,6 +182,36 @@ Error Responses:
 ```
 
 ### 2.3 Endpoint: `/users/:id`
+#### `PUT` - Updates a specific user's information
+Allows the user to update it's profile's information.
+
+Request:
+```bash
+curl -X 'PUT' '/users/validID' \
+```
+
+**Response:**
+```json
+{
+  "message": "User's information updated successfully."
+}
+```
+
+Error Responses:
+```
+404 User with ID missingUserID not found.
+400 Invalid user ID: 'notValidID'.
+400 Username must be at least 4 characters long.
+400 Password must be at least 6 characters long.
+400 This field is required.
+400 Please provide a valid email address.
+400 No changes detected. User's information unchanged.
+409 Email takenEmail is already taken.
+409 Username takenUsername is already taken
+```
+
+
+### 2.4 Endpoint: `/users/:id`
 #### `DELETE` - Delete a specific user
 Allows the deletion of a specific user by its ID.
 
@@ -314,7 +344,60 @@ curl -X 'POST' '/lobby/create' \
 }
 ```
 
-### 3.4 Endpoint: `/lobby/join`
+Error Responses:
+```
+404 User Not Found: User with ID missingId not found..
+400 Invalid User ID: 'notValidID'.
+```
+
+### 3.4 Endpoint: `/lobby/:id`
+#### `PUT` - Update a specific lobby
+Allows the user to update it's profile's information.
+
+Request:
+```bash
+curl -X 'PUT '/lobby/validID' \
+```
+
+**Response:**
+```json
+{
+  "message": "Lobby's information updated successfully."
+}
+```
+
+Error Responses:
+```
+404 Lobby with ID missingLobbyID not found.
+400 Invalid Lobby ID: 'notValidID'.
+400 Lobby name takenLobbyName is already in use.
+400 Cannot reduce players per team to 2 when there are 6 current players.
+400 No changes detected. Lobby's information unchanged.
+```
+
+### 3.5 Endpoint: `/lobby/:id`
+#### `DELETE` - Delete a specific lobby
+Allows the deletion of a specific lobby by its ID.
+
+Request:
+```bash
+curl -X 'DELETE' '/lobby/validID' \
+```
+
+**Response:**
+```json
+{
+  "message": "Lobby with ID validID deleted successfully."
+}
+```
+
+Error Responses:
+```
+404 Lobby with ID missingLobbyID not found.
+400 Invalid Lobby ID: 'notValidID'.
+```
+
+### 3.6 Endpoint: `/lobby/join`
 #### `POST` - Join an existing game lobby
 Allows a player to join a specified lobby, given that the lobby isn't full. Players will be added to teams automatically based on
 available spots.
@@ -349,7 +432,7 @@ Error Responses:
 400 lobbyId must be a string.
 ```
 
-### 3.5 Endpoint: `/lobby/teams`
+### 3.7 Endpoint: `/lobby/teams`
 #### `POST` - Assign players to teams
 Assigns players to teams in the lobby before the game starts.
 
@@ -396,29 +479,6 @@ Error Responses:
 400 Invalid Team Assignment: Some players are missing or already
 assigned.
 ```
-
-### 3.6 Endpoint: `/lobby/:id`
-#### `DELETE` - Delete a specific lobby
-Allows the deletion of a specific lobby by its ID.
-
-Request:
-```bash
-curl -X 'DELETE' '/lobby/validID' \
-```
-
-**Response:**
-```json
-{
-  "message": "Lobby with ID validID deleted successfully."
-}
-```
-
-Error Responses:
-```
-404 Lobby with ID missingLobbyID not found.
-400 Invalid Lobby ID: 'notValidID'.
-```
-
 
 ### 4. Endpoint /chat
 Route that handles all chat functionalities within the game, allowing players to send messages and retrieve chat history in real-time.

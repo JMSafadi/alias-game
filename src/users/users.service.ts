@@ -62,6 +62,15 @@ export class UsersService {
       throw new BadRequestException(errorMessage);
     }
 
+    //Check if no updates are actually being made.
+    const isEmailSame = updateData.email === user.email || updateData.email === undefined;
+    const isUsernameSame = updateData.username === user.username || updateData.username === undefined;
+    const isPasswordSame = updateData.password === user.password || updateData.password === undefined;
+
+    if (isEmailSame && isUsernameSame && isPasswordSame) {
+      throw new BadRequestException("No changes detected. User's information unchanged.");
+    }
+
     //Check if the new email is already taken.
     if (updateData.email) {
       const existingUserWithEmail = await this.userModel.findOne({ email: updateData.email });

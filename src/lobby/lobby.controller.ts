@@ -33,6 +33,12 @@ export class LobbyController {
         return this.lobbyService.updateLobby(id, updateLobbyDto);
     }
 
+    //Route to delete a lobby by id.
+    @Delete(':id')
+    async deleteLobby(@Param('id') id: string) {
+        return this.lobbyService.deleteLobbyById(id);
+    }
+
     //Route to join an existing lobby.
     @Post('join')
     joinLobby(@Body() joinLobbyDto: JoinLobbyDto) {
@@ -43,11 +49,5 @@ export class LobbyController {
     @Post('teams')
     assignTeams(@Body() assignTeamsDto: AssignTeamsDto) {
         return this.lobbyService.assignTeams(assignTeamsDto);
-    }
-
-    //Route to delete a lobby by id.
-    @Delete(':id')
-    async deleteLobby(@Param('id') id: string) {
-        return this.lobbyService.deleteLobbyById(id);
     }
 }

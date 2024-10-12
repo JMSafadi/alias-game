@@ -6,7 +6,7 @@ export class Lobby extends Document {
     @Prop({ required: true })
     ownerId: string;
 
-    @Prop()
+    @Prop({ unique: true })
     lobbyName: string;
 
     @Prop({ required: true })

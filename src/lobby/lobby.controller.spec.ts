@@ -161,6 +161,31 @@ describe('LobbyController', () => {
         });
     });
 
+    describe('deleteLobby', () => {
+        it('should delete a lobby by ID', async () => {
+            const validLobbyId = 'validLobbyId';
+            lobbyService.deleteLobbyById = jest.fn().mockResolvedValue({ success: true, message: 'Lobby deleted successfully' });
+
+            const result = await lobbyController.deleteLobby(validLobbyId);
+            expect(result).toEqual({ success: true, message: 'Lobby deleted successfully' });
+            expect(lobbyService.deleteLobbyById).toHaveBeenCalledWith(validLobbyId); //Verify method was called with correct ID.
+        });
+
+        it('should throw NotFoundException if the lobby does not exist', async () => {
+            const nonExistentLobbyId = 'nonExistentLobbyId';
+            lobbyService.deleteLobbyById = jest.fn().mockRejectedValue(new NotFoundException('Lobby with ID not found'));
+
+            await expect(lobbyController.deleteLobby(nonExistentLobbyId)).rejects.toThrow(NotFoundException);
+        });
+
+        it('should throw BadRequestException if ID is invalid', async () => {
+            const invalidLobbyId = 'invalidLobbyId';
+            lobbyService.deleteLobbyById = jest.fn().mockRejectedValue(new BadRequestException('Invalid lobby ID'));
+
+            await expect(lobbyController.deleteLobby(invalidLobbyId)).rejects.toThrow(BadRequestException);
+        });
+    });
+
     describe('joinLobby', () => {
         it('should allow a user to join a lobby', async () => {
             const joinLobbyDto: JoinLobbyDto = {
@@ -253,31 +278,6 @@ describe('LobbyController', () => {
             lobbyService.assignTeams = jest.fn().mockRejectedValue(new BadRequestException('Invalid assignment data'));
 
             await expect(lobbyController.assignTeams(assignTeamsDto)).rejects.toThrow(BadRequestException);
-        });
-    });
-
-    describe('deleteLobby', () => {
-        it('should delete a lobby by ID', async () => {
-            const validLobbyId = 'validLobbyId';
-            lobbyService.deleteLobbyById = jest.fn().mockResolvedValue({ success: true, message: 'Lobby deleted successfully' });
-
-            const result = await lobbyController.deleteLobby(validLobbyId);
-            expect(result).toEqual({ success: true, message: 'Lobby deleted successfully' });
-            expect(lobbyService.deleteLobbyById).toHaveBeenCalledWith(validLobbyId); //Verify method was called with correct ID.
-        });
-
-        it('should throw NotFoundException if the lobby does not exist', async () => {
-            const nonExistentLobbyId = 'nonExistentLobbyId';
-            lobbyService.deleteLobbyById = jest.fn().mockRejectedValue(new NotFoundException('Lobby with ID not found'));
-
-            await expect(lobbyController.deleteLobby(nonExistentLobbyId)).rejects.toThrow(NotFoundException);
-        });
-
-        it('should throw BadRequestException if ID is invalid', async () => {
-            const invalidLobbyId = 'invalidLobbyId';
-            lobbyService.deleteLobbyById = jest.fn().mockRejectedValue(new BadRequestException('Invalid lobby ID'));
-
-            await expect(lobbyController.deleteLobby(invalidLobbyId)).rejects.toThrow(BadRequestException);
         });
     });
 });

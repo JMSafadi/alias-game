@@ -87,7 +87,6 @@ describe('LobbyService', () => {
             };
             const users = [{ _id: 'user1', username: 'Owner' }];
 
-            // Mock findById to return a query chainable with lean
             (lobbyModel.findById as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockResolvedValue(lobby)
             });
@@ -119,24 +118,25 @@ describe('LobbyService', () => {
 
     describe('createLobby', () => {
         it('should create a new lobby successfully', async () => {
-            const createLobbyDto = { userId: 'user1', playersPerTeam: 3 };
+            const validMongoId = '507f191e810c19729de860ea';
+            const createLobbyDto = { userId: validMongoId, playersPerTeam: 3 };
             const user = { username: 'Owner' };
 
             (userModel.findById as jest.Mock).mockResolvedValue(user);
             (lobbyModel.findOne as jest.Mock).mockResolvedValue(null);
 
             const newLobbyMock = {
-                ownerId: 'user1',
+                ownerId: validMongoId,
                 playersPerTeam: 3,
                 maxPlayers: 6,
                 currentPlayers: 1,
-                players: [{ userId: 'user1' }],
+                players: [{ userId: validMongoId }],
                 toObject: jest.fn().mockReturnValue({
-                    ownerId: 'user1',
+                    ownerId: validMongoId,
                     playersPerTeam: 3,
                     maxPlayers: 6,
                     currentPlayers: 1,
-                    players: [{ userId: 'user1' }],
+                    players: [{ userId: validMongoId }],
                 }),
             };
 
@@ -154,7 +154,8 @@ describe('LobbyService', () => {
         });
 
         it('should throw NotFoundException if user is not found', async () => {
-            const createLobbyDto = { userId: 'nonexistentUser', playersPerTeam: 3 };
+            const validMongoId = '507f191e810c19729de860ea';
+            const createLobbyDto = { userId: validMongoId, playersPerTeam: 3 };
 
             (userModel.findById as jest.Mock).mockResolvedValue(null);
 
@@ -162,8 +163,9 @@ describe('LobbyService', () => {
         });
 
         it('should throw BadRequestException if user is already in another lobby', async () => {
-            const createLobbyDto = { userId: 'user1', playersPerTeam: 3 };
-            const existingLobby = { ownerId: 'user1' };
+            const validMongoId = '507f191e810c19729de860ea';
+            const createLobbyDto = { userId: validMongoId, playersPerTeam: 3 };
+            const existingLobby = { ownerId: validMongoId };
 
             (userModel.findById as jest.Mock).mockResolvedValue({ username: 'Owner' });
             (lobbyModel.findOne as jest.Mock).mockResolvedValue(existingLobby);
@@ -171,6 +173,7 @@ describe('LobbyService', () => {
             await expect(service.createLobby(createLobbyDto)).rejects.toThrow(BadRequestException);
         });
     });
+
 
     describe('updateLobby', () => {
         it('should update the lobby information successfully', async () => {
@@ -223,6 +226,39 @@ describe('LobbyService', () => {
             (lobbyModel.findById as jest.Mock).mockResolvedValue(lobby);
 
             await expect(service.updateLobby(lobbyId, updateLobbyDto)).rejects.toThrow(BadRequestException);
+        });
+    });
+
+    describe('deleteLobbyById', () => {
+        it('should delete a lobby successfully and return the correct response', async () => {
+            const lobbyId = '507f191e810c19729de860ea';
+
+            const lobby = { _id: lobbyId, lobbyName: 'Test Lobby' };
+            (lobbyModel.findByIdAndDelete as jest.Mock).mockResolvedValue(lobby);
+
+            const result = await service.deleteLobbyById(lobbyId);
+
+            expect(result).toEqual({ message: `Lobby with ID ${lobbyId} deleted successfully.` });
+            expect(lobbyModel.findByIdAndDelete).toHaveBeenCalledWith(lobbyId);
+        });
+
+        it('should throw a BadRequestException if the lobby ID is invalid', async () => {
+            const invalidLobbyId = 'invalid-id';
+
+            await expect(service.deleteLobbyById(invalidLobbyId)).rejects.toThrow(
+                new BadRequestException(`Invalid lobby ID: ${invalidLobbyId}.`)
+            );
+        });
+
+        it('should throw a NotFoundException if the lobby does not exist', async () => {
+            const lobbyId = '507f191e810c19729de860ea';
+
+            (lobbyModel.findByIdAndDelete as jest.Mock).mockResolvedValue(null);
+
+            await expect(service.deleteLobbyById(lobbyId)).rejects.toThrow(
+                new NotFoundException(`Lobby with ID ${lobbyId} not found.`)
+            );
+            expect(lobbyModel.findByIdAndDelete).toHaveBeenCalledWith(lobbyId);
         });
     });
 
@@ -453,39 +489,6 @@ describe('LobbyService', () => {
             await expect(service.assignTeams(assignTeamsDto)).rejects.toThrow(
                 new BadRequestException(`Invalid Team Assignment: The current number of players '${lobby.currentPlayers}' does not match maxPlayers '${lobby.maxPlayers}'.`)
             );
-        });
-    });
-
-    describe('deleteLobbyById', () => {
-        it('should delete a lobby successfully and return the correct response', async () => {
-            const lobbyId = '507f191e810c19729de860ea';
-
-            const lobby = { _id: lobbyId, lobbyName: 'Test Lobby' };
-            (lobbyModel.findByIdAndDelete as jest.Mock).mockResolvedValue(lobby);
-
-            const result = await service.deleteLobbyById(lobbyId);
-
-            expect(result).toEqual({ message: `Lobby with ID ${lobbyId} deleted successfully.` });
-            expect(lobbyModel.findByIdAndDelete).toHaveBeenCalledWith(lobbyId);
-        });
-
-        it('should throw a BadRequestException if the lobby ID is invalid', async () => {
-            const invalidLobbyId = 'invalid-id';
-
-            await expect(service.deleteLobbyById(invalidLobbyId)).rejects.toThrow(
-                new BadRequestException(`Invalid lobby ID: ${invalidLobbyId}.`)
-            );
-        });
-
-        it('should throw a NotFoundException if the lobby does not exist', async () => {
-            const lobbyId = '507f191e810c19729de860ea';
-
-            (lobbyModel.findByIdAndDelete as jest.Mock).mockResolvedValue(null);
-
-            await expect(service.deleteLobbyById(lobbyId)).rejects.toThrow(
-                new NotFoundException(`Lobby with ID ${lobbyId} not found.`)
-            );
-            expect(lobbyModel.findByIdAndDelete).toHaveBeenCalledWith(lobbyId);
         });
     });
 });

@@ -97,7 +97,7 @@ describe('UsersService', () => {
         });
 
         it('should throw ConflictException if email is already taken', async () => {
-            userModel.findById.mockResolvedValue(mockUserWithSave);
+            userModel.findById.mockResolvedValue({ ...mockUserWithSave, email: 'current@example.com' });
             userModel.findOne.mockResolvedValue({ _id: 'anotherUserId' });
 
             const updateData = { email: 'updated@example.com' };
