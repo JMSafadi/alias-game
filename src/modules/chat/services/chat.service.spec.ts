@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChatService } from './chat.service';
 import { getModelToken } from '@nestjs/mongoose';
-import { Message, MessageDocument } from './schemas/message.schema';
+import { Message, MessageDocument } from '../schemas/message.schema';
 import { Model } from 'mongoose';
-import { SendMessageDto } from './dto/send-message.dto';
+import { SendMessageDto } from '../dto/send-message.dto';
 
 class MockMessageModel {
   private data: Partial<MessageDocument>;

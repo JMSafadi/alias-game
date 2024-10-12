@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Message, MessageDocument } from './schemas/message.schema';
-import { SendMessageDto } from './dto/send-message.dto';
-
+import { Message, MessageDocument } from '../schemas/message.schema';
+import { SendMessageDto } from '../dto/send-message.dto';
 /**
  * ChatService provides methods to handle chat-related operations such as saving and retrieving messages.
  */

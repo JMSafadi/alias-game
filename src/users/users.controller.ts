@@ -1,21 +1,41 @@
-import { Controller, Get, Delete, Param, Put, Body } from '@nestjs/common';
+import { Controller, Get, Delete, Param, UseGuards, Put, Body } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../modules/common/guards/roles.guard'
+import { Role } from '../modules/common/roles/role.enum';
+import { Roles } from '../modules/common/roles/roles.decorator'
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('users')
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) { }
 
-  //Route to fetch all users.
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiResponse({ status: 200, description: 'List of all users retrieved successfully.' })
+  @ApiResponse({ status: 403, description: 'Forbidden. Only admins can access this route.' })
   @Get()
   async getAllUsers() {
     return this.usersService.getAllUsers();
   }
 
-  //Route to fetch a specific user by ID.
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiResponse({ status: 200, description: 'User details retrieved successfully.' })
+  @ApiResponse({ status: 404, description: 'User not found with the provided ID.' })
+  @ApiResponse({ status: 403, description: 'Forbidden. Only admins can access this route.' })
+  @ApiParam({ name: 'id', description: 'User ID' })
   @Get(':id')
   async getUserById(@Param('id') id: string) {
-    return this.usersService.getUserById(id);;
+    return this.usersService.getUserById(id);
   }
+
 
   //Route to update a specific user's information.
   @Put(':id')
@@ -26,7 +46,14 @@ export class UsersController {
     return this.usersService.updateUser(id, updateData);
   }
 
-  //Route to delete a user by ID.
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a user by ID' })
+  @ApiResponse({ status: 200, description: 'User deleted successfully.' })
+  @ApiResponse({ status: 404, description: 'User not found with the provided ID.' })
+  @ApiResponse({ status: 403, description: 'Forbidden. Only admins can access this route.' })
+  @ApiParam({ name: 'id', description: 'User ID' })
   @Delete(':id')
   async deleteUser(@Param('id') id: string) {
     return this.usersService.deleteUserById(id);
