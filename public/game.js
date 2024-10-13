@@ -249,6 +249,53 @@ function initSocketConnection() {
   });
 }
 
+// // Function to create a new lobby
+// async function createLobby() {
+//   const token = localStorage.getItem('token');
+
+//   if (!token) {
+//     alert('You must be logged in to create a lobby.');
+//     return;
+//   }
+
+//   const playersPerTeam = document.getElementById('playersPerTeam').value;
+//   const timePerTurn = document.getElementById('timePerTurn').value;
+
+//   if (!playersPerTeam || !timePerTurn) {
+//     alert('Please enter valid values for players per team and time per turn.');
+//     return;
+//   }
+
+//   try {
+//     const response = await fetch('http://localhost:3000/lobby', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         Authorization: `Bearer ${token}`,
+//       },
+//       body: JSON.stringify({
+//         playersPerTeam: parseInt(playersPerTeam, 10),
+//         timePerTurn: parseInt(timePerTurn, 10),
+//         rounds: 3, // Możesz dodać pole do wpisania liczby rund, jeśli chcesz
+//         userId: localStorage.getItem('userId'), // Dodaj `userId`, który powinien być zapisany po zalogowaniu
+//       }),
+//     });
+
+//     if (response.ok) {
+//       const data = await response.json();
+//       alert('Lobby created successfully!');
+//       localStorage.setItem('lobbyId', data.lobbyID);
+//       console.log('Created Lobby:', data);
+//     } else {
+//       const errorData = await response.json();
+//       alert(errorData.message || 'Failed to create lobby.');
+//     }
+//   } catch (error) {
+//     console.error('Error creating lobby:', error);
+//     alert('An error occurred while creating the lobby.');
+//   }
+// }
+
 // Function to create a new lobby
 async function createLobby() {
   const token = localStorage.getItem('token');
@@ -267,7 +314,8 @@ async function createLobby() {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/lobby', {
+    const response = await fetch('http://localhost:3000/lobby/create', {
+      // Używamy endpointu `/lobby/create`
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

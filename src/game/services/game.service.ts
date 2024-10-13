@@ -35,6 +35,16 @@ export class GameService {
 
   // Add the new method to start a game from lobby data
   async startGameFromLobby(lobby: Lobby): Promise<Game> {
+    // Sprawdzenie, czy właściwość `teams` istnieje i czy jest tablicą
+    if (
+      !lobby.teams ||
+      !Array.isArray(lobby.teams) ||
+      lobby.teams.length === 0
+    ) {
+      throw new BadRequestException(
+        'Teams are not properly assigned in the lobby',
+      );
+    }
     // Extract team and player information from the lobby
     const teamsInfo = lobby.teams.map((team) => ({
       teamName: team.teamName,

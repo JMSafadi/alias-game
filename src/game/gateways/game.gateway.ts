@@ -18,11 +18,11 @@ import { SendMessageDto } from '../dto/send-message.dto';
 import { TurnStartedDto } from '../dto/turn-started.dto';
 import { SimilarityService } from 'src/utils/similarity.service';
 import { Game } from '../schemas/Game.schema';
-import { UseGuards } from '@nestjs/common';
-import { WsJwtAuthGuard } from 'src/auth/ws-jwt-auth.guard';
+// import { UseGuards } from '@nestjs/common';
+// import { WsJwtAuthGuard } from 'src/auth/ws-jwt-auth.guard';
 
 @WebSocketGateway({ namespace: '/game', cors: { origin: '*' } })
-@UseGuards(WsJwtAuthGuard)
+// @UseGuards(WsJwtAuthGuard)
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   public server: Server;
@@ -111,8 +111,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     try {
-      const lobby = await this.lobbyService.getLobbyById(data.lobbyId);
+      // Usunięcie znaków < i >
+      const cleanLobbyId = data.lobbyId.replace(/[<>]/g, '');
 
+      console.log(`Received lobbyId: ${data.lobbyId}`);
+      console.log(`Cleaned lobbyId: ${cleanLobbyId}`);
+
+      const lobby = await this.lobbyService.getLobbyById(cleanLobbyId);
+
+      // const lobby = await this.lobbyService.getLobbyById(data.lobbyId);
       if (!lobby) {
         client.emit('error', { message: 'Lobby not found' });
         return;
