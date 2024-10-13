@@ -10,6 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { Game } from '../schemas/Game.schema';
 import { SendMessageDto } from '../dto/send-message.dto';
+import { LobbyService } from 'src/lobby/lobby.service';
 import { Lobby } from 'src/schemas/Lobby.schema';
 
 interface CheckWordGuessResponse {
@@ -21,50 +22,50 @@ interface CheckWordGuessResponse {
 export class GameService {
   constructor(
     @InjectModel(Game.name) private gameModel: Model<Game>,
+    private readonly lobbyService: LobbyService,
     private readonly scoreService: ScoreService,
     private readonly similarityService: SimilarityService,
   ) {}
 
-  // Remove the startGame method that uses StartGameDto
-  // async startGame(startGameDto: StartGameDto): Promise<Game> {
-  //   // Create a new game instance using DTO
-  //   const newGame = new this.gameModel(startGameDto);
-  //   // Save in database
-  //   return await newGame.save();
-  // }
-
-  // Add the new method to start a game from lobby data
+  // Metoda do uruchamiania gry na podstawie danych lobby
   async startGameFromLobby(lobby: Lobby): Promise<Game> {
-    // Sprawdzenie, czy właściwość `teams` istnieje i czy jest tablicą
     if (
       !lobby.teams ||
       !Array.isArray(lobby.teams) ||
-      lobby.teams.length === 0
+      lobby.teams.length < 2 || // Sprawdzenie, czy są co najmniej dwie drużyny
+      lobby.teams.some(
+        (team) =>
+          !team.teamName || // Sprawdzenie, czy drużyna ma nazwę
+          !Array.isArray(team.players) || // Sprawdzenie, czy gracze są w tablicy
+          team.players.length === 0, // Sprawdzenie, czy drużyna ma przypisanych graczy
+      )
     ) {
       throw new BadRequestException(
         'Teams are not properly assigned in the lobby',
       );
     }
-    // Extract team and player information from the lobby
-    const teamsInfo = lobby.teams.map((team) => ({
-      teamName: team.teamName,
-      players: team.players,
-      score: 0,
-    }));
 
-    // Initialize the game object using lobby settings
+    console.log('Lobby teams in startGameFromLobby:', lobby.teams);
+
+    lobby.teams.forEach((team, index) => {
+      console.log(`Team ${index + 1}:`, team);
+    });
+
     const newGame = new this.gameModel({
-      teamsInfo,
+      lobbyId: lobby._id,
       currentRound: 1,
       rounds: lobby.rounds,
       timePerTurn: lobby.timePerTurn,
       currentTurn: null,
       playingTurn: 0,
       isGameActive: true,
-      // Any other necessary game properties
+      teamsInfo: lobby.teams.map((team) => ({
+        teamName: team.teamName,
+        players: team.players,
+        score: 0,
+      })),
     });
 
-    // Save the game to the database
     return await newGame.save();
   }
 
@@ -82,12 +83,27 @@ export class GameService {
   async getPlayerRole(gameId: string, playerId: string): Promise<string> {
     const game = await this.getGameById(gameId);
 
-    if (game.currentTurn && game.currentTurn.describer === playerId) {
+    const lobby = await this.lobbyService.getLobbyById(game.lobbyId);
+    if (!lobby) {
+      throw new NotFoundException('Lobby not found');
+    }
+
+    const currentTurn = game.currentTurn;
+
+    if (currentTurn && currentTurn.describer === playerId) {
       return 'describer';
     }
 
-    if (game.currentTurn && game.currentTurn.guessers.includes(playerId)) {
-      return 'guesser';
+    if (currentTurn && lobby.teams) {
+      const guessers = lobby.teams
+        .flatMap((team) =>
+          team.teamName === currentTurn.teamName ? team.players : [],
+        )
+        .filter((player) => player !== currentTurn.describer);
+
+      if (guessers.includes(playerId)) {
+        return 'guesser';
+      }
     }
 
     return 'chat';
@@ -101,19 +117,20 @@ export class GameService {
     // Retrieve the game based on gameId
     const game = await this.getGameById(gameId);
 
+    const lobby = await this.lobbyService.getLobbyById(game.lobbyId);
+    if (!lobby) {
+      throw new NotFoundException('Lobby not found');
+    }
+
     // Verify if the current team has the right to guess
     if (game.currentTurn.teamName !== senderTeamName) {
       throw new ForbiddenException('Not your team turn!');
     }
-    // Verify is guess word is correct
-    console.log(game.currentTurn.wordToGuess);
 
     // Check if the guessed word is correct
     const isCorrect = this.similarityService.checkGuess(
       game.currentTurn.wordToGuess,
-      guessWord,
-      game.currentTurn.wordToGuess.toLocaleLowerCase(),
-      content.toLocaleLowerCase(),
+      content,
     );
 
     if (isCorrect) {
@@ -125,14 +142,14 @@ export class GameService {
       const score = this.scoreService.calculateScore(game, elapsedTime);
 
       // Add points to the team, save the game state
-      this.scoreService.updateTeamScore(game, senderTeamName, score);
+      await this.scoreService.updateTeamScore(lobby._id, senderTeamName, score);
       game.currentTurn.isTurnActive = false;
 
       await game.save();
       return { correct: true, score };
     } else {
       // Deduct points for incorrect guess
-      this.scoreService.updateTeamScore(game, senderTeamName, -5);
+      await this.scoreService.updateTeamScore(lobby._id, senderTeamName, -5);
       await game.save();
       return { correct: false };
     }

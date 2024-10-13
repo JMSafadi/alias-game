@@ -5,6 +5,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { StartTurnDto } from '../dto/start-turn.dto';
 import { TeamService } from './team.service';
 import { WordService } from './words.service';
+import { LobbyService } from 'src/lobby/lobby.service';
 
 interface StartNextTurnResponse {
   gameOver: boolean;
@@ -18,6 +19,7 @@ export class TurnService {
     private gameModel: Model<Game>,
     private readonly teamService: TeamService,
     private readonly wordService: WordService,
+    private readonly lobbyService: LobbyService,
   ) {}
 
   async startTurn(startTurnDto: StartTurnDto): Promise<Game> {
@@ -27,8 +29,14 @@ export class TurnService {
       throw new NotFoundException('Game not found');
     }
 
+    // Pobierz informacje o lobby
+    const lobby = await this.lobbyService.getLobbyById(game.lobbyId);
+    if (!lobby) {
+      throw new NotFoundException('Lobby not found');
+    }
+
     // Find team playing
-    const currentTeam = game.teamsInfo.find(
+    const currentTeam = lobby.teams.find(
       (team) => team.teamName === startTurnDto.teamName,
     );
     if (!currentTeam) {
@@ -55,6 +63,7 @@ export class TurnService {
     console.log('teamName:', startTurnDto.teamName);
     console.log('describer:', describer);
     console.log('guessers:', guessers);
+
     // Set next turn
     // Update current turn state and generate word
     game.currentTurn = {
@@ -88,10 +97,16 @@ export class TurnService {
       throw new NotFoundException('Game not found');
     }
 
+    // Pobierz informacje o lobby
+    const lobby = await this.lobbyService.getLobbyById(game.lobbyId);
+    if (!lobby) {
+      throw new NotFoundException('Lobby not found');
+    }
+
     // Verify and end game
     if (
       game.currentRound === game.rounds &&
-      game.playingTurn === game.teamsInfo.length
+      game.playingTurn === lobby.teams.length
     ) {
       return { gameOver: true, game };
     }
@@ -101,16 +116,16 @@ export class TurnService {
     game.playingTurn++;
 
     // Updated current turn and round
-    if (game.playingTurn > game.teamsInfo.length) {
+    if (game.playingTurn > lobby.teams.length) {
       game.playingTurn = 1;
       game.currentRound++;
     }
 
     // Get next team to change turn
-    const nextTeam = this.teamService.getNextTeam(game);
+    const nextTeam = await this.teamService.getNextTeam(lobby.lobbyId, game.currentTurn.teamName);
 
     // Find team playing
-    const currentTeam = game.teamsInfo.find(
+    const currentTeam = lobby.teams.find(
       (team) => team.teamName === nextTeam,
     );
     if (!currentTeam) {

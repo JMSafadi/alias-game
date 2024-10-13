@@ -3,7 +3,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ChatModule } from './modules/chat/chat.module';
+import { ChatModule } from './chat/chat.module';
 import { UsersModule } from './users/users.module';
 import { GameModule } from './game/game.module';
 import { AppController } from './app.controller';

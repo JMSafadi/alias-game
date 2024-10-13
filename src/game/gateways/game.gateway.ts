@@ -64,9 +64,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     try {
+      console.log('Received message from client:', messageBody);
       const sendMessageDto = messageBody;
-
-      console.log('Received message from client:', sendMessageDto);
 
       // Get the player's role based on the current game state
       const role = await this.gameService.getPlayerRole(
@@ -92,6 +91,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Save and broadcast the message
       const message = await this.messageService.saveMessage(sendMessageDto);
+      console.log('Message saved successfully:', message);
       this.server
         .to(`lobby_${message.lobbyId}`)
         .emit('receive_message', message);
@@ -107,33 +107,49 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     try {
-      // Usunięcie znaków < i >
-      const cleanLobbyId = data.lobbyId.replace(/[<>]/g, '');
+      const lobbyId = data.lobbyId;
 
-      console.log(`Received lobbyId: ${data.lobbyId}`);
-      console.log(`Cleaned lobbyId: ${cleanLobbyId}`);
+      console.log(`Received lobbyId: ${lobbyId}`);
 
-      const lobby = await this.lobbyService.getLobbyById(cleanLobbyId);
+      // Pobieramy lobby na podstawie lobbyId
+      const lobby = await this.lobbyService.getLobbyById(lobbyId);
 
       if (!lobby) {
         client.emit('error', { message: 'Lobby not found' });
         return;
       }
 
-      // Initialize the game with data from the lobby
+      // Sprawdzenie, czy drużyny są poprawnie przypisane
+      if (
+        !lobby.teams ||
+        !Array.isArray(lobby.teams) ||
+        lobby.teams.some(
+          (team) =>
+            !team.teamName ||
+            !Array.isArray(team.players) ||
+            team.players.length === 0,
+        )
+      ) {
+        client.emit('error', {
+          message: 'Teams are not properly assigned in the lobby',
+        });
+        return;
+      }
+
+      // Uruchamiamy grę na podstawie danych lobby
       const game = await this.gameService.startGameFromLobby(lobby);
 
-      // Emit game started event to the lobby room
-      this.server.to(`lobby_${lobby.lobbyID}`).emit('gameStarted', { game });
+      // Emitujemy event o rozpoczęciu gry do wszystkich graczy w pokoju lobby
+      this.server.to(`lobby_${lobby._id}`).emit('gameStarted', { game });
 
-      // Initialize the first turn
+      // Inicjalizujemy pierwszą turę
       const updatedGame = await this.turnService.startTurn({
         gameId: game._id.toString(),
-        teamName: game.teamsInfo[0].teamName,
+        teamName: lobby.teams[0].teamName,
       });
 
-      // Emit turnStarted event
-      this.server.to(`lobby_${lobby.lobbyID}`).emit(
+      // Emitujemy event o rozpoczęciu tury
+      this.server.to(`lobby_${lobby._id}`).emit(
         'turnStarted',
         new TurnStartedDto({
           message: `Turn started for team: ${updatedGame.currentTurn.teamName}. ${updatedGame.currentTurn.describer} is the describer!`,
@@ -146,8 +162,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }),
       );
 
-      // Start turn timer
-      this.startTurnTimer(updatedGame, lobby.lobbyID);
+      // Rozpoczynamy timer tury
+      this.startTurnTimer(updatedGame, lobby._id.toString());
     } catch (error) {
       console.error('Error starting game:', error);
       client.emit('error', { message: 'Failed to start game' });
@@ -168,7 +184,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const { gameOver, game: nextTurn } =
           await this.turnService.startNextTurn(game._id.toString());
         if (gameOver) {
-          const teamsInfo = nextTurn.teamsInfo;
+          const lobby = await this.lobbyService.getLobbyById(lobbyId);
+          if (!lobby) {
+            console.error('Lobby not found when ending game.');
+            return;
+          }
+
+          const teamsInfo = lobby.teams;
           // Find max score team/s
           const maxScore = Math.max(...teamsInfo.map((team) => team.score));
           const winningTeams = teamsInfo.filter(
