@@ -17,6 +17,7 @@ async function bootstrap() {
     .setTitle('Alias game') // Title for the Swagger documentation
     .setDescription('Alias API') // Description of the API
     .setVersion('1.0') // Version of the API
+    .addBearerAuth() // Allow using @ApiBearerAuth in endpoint
     .build();
 
   // Create Swagger documentation and setup Swagger UI endpoint

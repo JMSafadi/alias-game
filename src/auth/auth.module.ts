@@ -14,29 +14,22 @@ import { UserSchema } from '../schemas/User.schema';
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     ConfigModule,
-    // JwtModule.registerAsync({
-    //   imports: [ConfigModule], // Importa ConfigModule aquí también
-    //   inject: [ConfigService],
-    //   useFactory: (config: ConfigService) => {
-    //     const jwtSecret = config.get<string>('JWT_SECRET');
-    //     console.log('JWT_SECRET in JwtModule:', jwtSecret);
-    //     return {
-    //       secret: config.get<string>('JWT_SECRET'),
-    //       signOptions: {
-    //         expiresIn: config.get<string | number>('JWT_EXPIRES'),
-    //       },
-    //     };
-    //   },
-    // }),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h' }, // lub inny czas wygaśnięcia, który preferujesz
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        return {
+          secret: config.get<string>('JWT_SECRET'),
+          signOptions: {
+            expiresIn: config.get<string | number>('JWT_EXPIRES'),
+          },
+        };
+      },
     }),
-
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, WsJwtAuthGuard, JwtService],
-  exports: [JwtStrategy, PassportModule, WsJwtAuthGuard, JwtService, JwtModule],
+  providers: [AuthService, JwtStrategy],
+  exports: [JwtStrategy, PassportModule, JwtModule],
 })
 export class AuthModule {}

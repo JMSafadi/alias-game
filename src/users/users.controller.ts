@@ -1,37 +1,52 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpException,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Controller, Get, Delete, Param, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/CreateUser.dto';
-import mongoose from 'mongoose';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RolesGuard } from 'src/modules/common/guards/roles.guard';
+import { Role } from 'src/modules/common/roles/role.enum';
+import { Roles } from 'src/modules/common/roles/roles.decorator';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('users')
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
 
-  // Create a new user
-  @Post()
-  createUsers(@Body() createUserDto: CreateUserDto) {
-    console.log(createUserDto);
-    return this.usersService.createUser(createUserDto);
-  }
-  // Get all users
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiResponse({ status: 200, description: 'List of all users retrieved successfully.' })
+  @ApiResponse({ status: 403, description: 'Forbidden. Only admins can access this route.' })
   @Get()
-  getUsers() {
-    return this.usersService.getUsers();
+  async getAllUsers() {
+    return this.usersService.getAllUsers();
   }
-  // Get one user by ID
+
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiResponse({ status: 200, description: 'User details retrieved successfully.' })
+  @ApiResponse({ status: 404, description: 'User not found with the provided ID.' })
+  @ApiResponse({ status: 403, description: 'Forbidden. Only admins can access this route.' })
+  @ApiParam({ name: 'id', description: 'User ID' })
   @Get(':id')
   async getUserById(@Param('id') id: string) {
-    const isValid = mongoose.Types.ObjectId.isValid(id);
-    if (!isValid) throw new HttpException('User not found.', 404);
-    const foundUser = await this.usersService.getUserById(id);
-    if (!foundUser) throw new HttpException('User not found.', 404);
-    return foundUser;
+    return this.usersService.getUserById(id);
+  }
+
+
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a user by ID' })
+  @ApiResponse({ status: 200, description: 'User deleted successfully.' })
+  @ApiResponse({ status: 404, description: 'User not found with the provided ID.' })
+  @ApiResponse({ status: 403, description: 'Forbidden. Only admins can access this route.' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @Delete(':id')
+  async deleteUser(@Param('id') id: string) {
+    return this.usersService.deleteUserById(id);
   }
 }

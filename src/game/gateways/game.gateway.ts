@@ -8,7 +8,6 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-// Removed unused import of StartGameDto
 import { GameService } from './../services/game.service';
 import { TurnService } from '../services/turn.service';
 import { TimerService } from '../services/timer.service';
@@ -18,11 +17,8 @@ import { SendMessageDto } from '../dto/send-message.dto';
 import { TurnStartedDto } from '../dto/turn-started.dto';
 import { SimilarityService } from 'src/utils/similarity.service';
 import { Game } from '../schemas/Game.schema';
-// import { UseGuards } from '@nestjs/common';
-// import { WsJwtAuthGuard } from 'src/auth/ws-jwt-auth.guard';
 
 @WebSocketGateway({ namespace: '/game', cors: { origin: '*' } })
-// @UseGuards(WsJwtAuthGuard)
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   public server: Server;
@@ -119,7 +115,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const lobby = await this.lobbyService.getLobbyById(cleanLobbyId);
 
-      // const lobby = await this.lobbyService.getLobbyById(data.lobbyId);
       if (!lobby) {
         client.emit('error', { message: 'Lobby not found' });
         return;
