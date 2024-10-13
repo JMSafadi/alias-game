@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, Delete, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Delete, Param, UseGuards, Put } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { LobbyService } from './lobby.service';
 import { CreateLobbyDto } from './dto/CreateLobby.dto';
+import { UpdateLobbyDto } from './dto/UpdateLobby.dto';
 import { JoinLobbyDto } from './dto/JoinLobby.dto';
 import { AssignTeamsDto } from './dto/AssignTeams.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 /**
  * Controller responsible for managing lobbies.
@@ -27,6 +28,11 @@ export class LobbyController {
   @Get()
   async getAllLobbies() {
     return this.lobbyService.getAllLobbies();
+  }
+  //Route to update an existing lobby.
+  @Put(':id')
+  async updateLobby(@Param('id') id: string, @Body() updateLobbyDto: UpdateLobbyDto) {
+    return this.lobbyService.updateLobby(id, updateLobbyDto);
   }
 
   /**

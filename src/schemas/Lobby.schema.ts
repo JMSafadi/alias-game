@@ -3,8 +3,11 @@ import { Document } from 'mongoose';
 
 @Schema()
 export class Lobby extends Document {
-  @Prop({ required: true })
-  ownerId: string;
+    @Prop({ required: true })
+    ownerId: string;
+
+    @Prop({ unique: true })
+    lobbyName: string;
 
   @Prop({ required: true })
   playersPerTeam: number;
