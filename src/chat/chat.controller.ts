@@ -1,6 +1,6 @@
 import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Message } from 'src/game/schemas/message.schema';
+import { Message } from 'src/game/schemas/Message.schema';
 import { SendMessageDto } from 'src/game/dto/send-message.dto';
 import { MessageService } from 'src/game/services/message.service';
 

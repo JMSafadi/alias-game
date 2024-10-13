@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Game, GameSchema } from './schemas/Game.schema';
-import { Message, MessageSchema } from './schemas/message.schema';
+import { Message, MessageSchema } from './schemas/Message.schema';
 import { GameService } from './services/game.service';
 import { MessageService } from 'src/game/services/message.service';
 import { GameGateway } from './gateways/game.gateway';

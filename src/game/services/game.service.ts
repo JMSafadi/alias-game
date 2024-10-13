@@ -29,19 +29,19 @@ export class GameService {
 
   // Metoda do uruchamiania gry na podstawie danych lobby
   async startGameFromLobby(lobby: Lobby): Promise<Game> {
-    const lobbyObject = lobby.toObject();
+    // const lobbyObject = lobby.toObject();
     if (
-      !lobbyObject.teams ||
-      !Array.isArray(lobbyObject.teams) ||
-      lobbyObject.teams.length < 2 ||
-      lobbyObject.teams.some(
+      !lobby.teams ||
+      !Array.isArray(lobby.teams) ||
+      lobby.teams.length < 2 ||
+      lobby.teams.some(
         (team) =>
           !team.teamName ||
           !Array.isArray(team.players) ||
           team.players.length === 0,
       )
     ) {
-      console.log('Teams are not properly assigned:', lobbyObject.teams);
+      console.log('Teams are not properly assigned:', lobby.teams);
       throw new BadRequestException(
         'Teams are not properly assigned in the lobby',
       );
