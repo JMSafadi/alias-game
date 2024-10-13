@@ -15,7 +15,7 @@ import { MessageService } from '../services/message.service';
 import { LobbyService } from 'src/lobby/lobby.service';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { TurnStartedDto } from '../dto/turn-started.dto';
-import { SimilarityService } from 'src/utils/similarity.service';
+import * as jwt from 'jsonwebtoken';
 import { Game } from '../schemas/Game.schema';
 
 @WebSocketGateway({ namespace: '/game', cors: { origin: '*' } })
@@ -29,28 +29,56 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly turnService: TurnService,
     private readonly timerService: TimerService,
     private readonly messageService: MessageService,
-    private readonly similarityService: SimilarityService,
   ) {}
 
-  handleConnection(client: Socket): void {
-    const user = client.data.user;
+  async handleConnection(client: Socket): Promise<void> {
+    try {
+      const token = client.handshake.query.token as string;
 
-    if (user && typeof user === 'object') {
-      console.log(`Client connected: ${client.id}, User: ${user.username}`);
-    } else {
-      console.warn(
-        `Client connected: ${client.id}, but user data is missing or invalid.`,
-      );
-    }
+      if (!token) {
+        console.warn(
+          `Client ${client.id} attempted to connect without a token.`,
+        );
+        client.disconnect();
+        return;
+      }
 
-    // Extract lobbyId from client query parameters
-    const lobbyId = client.handshake.query.lobbyId as string;
+      const secretKey = process.env.JWT_SECRET;
 
-    if (lobbyId) {
-      client.join(`lobby_${lobbyId}`);
-      console.log(`Client ${client.id} joined room lobby_${lobbyId}`);
-    } else {
-      console.warn(`Client ${client.id} did not provide a lobbyId`);
+      jwt.verify(token, secretKey, (err, decoded) => {
+        if (err) {
+          console.warn(
+            `Client ${client.id} provided an invalid token: ${err.message}`,
+          );
+          client.disconnect();
+          return;
+        }
+
+        if (typeof decoded === 'object' && decoded) {
+          // Zakładamy, że token zawiera `username` lub `id` użytkownika
+          client.data.user = decoded;
+          console.log(
+            `Client connected: ${client.id}, User: ${client.data.user.username || client.data.user.id}`,
+          );
+        } else {
+          console.warn(`Client ${client.id} could not decode token properly.`);
+          client.disconnect();
+          return;
+        }
+
+        // Extract lobbyId from client query parameters
+        const lobbyId = client.handshake.query.lobbyId as string;
+
+        if (lobbyId) {
+          client.join(`lobby_${lobbyId}`);
+          console.log(`Client ${client.id} joined room lobby_${lobbyId}`);
+        } else {
+          console.warn(`Client ${client.id} did not provide a lobbyId`);
+        }
+      });
+    } catch (error) {
+      console.error(`Client ${client.id} connection error:`, error);
+      client.disconnect();
     }
   }
 
@@ -115,9 +143,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const lobby = await this.lobbyService.getLobbyById(lobbyId);
 
       if (!lobby) {
+        console.error('Lobby not found');
         client.emit('error', { message: 'Lobby not found' });
         return;
       }
+
+      console.log(`Lobby found: ${lobbyId}`);
 
       // Sprawdzenie, czy drużyny są poprawnie przypisane
       if (
@@ -130,26 +161,33 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             team.players.length === 0,
         )
       ) {
+        console.error('Teams are not properly assigned in the lobby');
         client.emit('error', {
           message: 'Teams are not properly assigned in the lobby',
         });
         return;
       }
 
+      console.log(`Teams are properly assigned in lobby: ${lobbyId}`);
+
       // Uruchamiamy grę na podstawie danych lobby
       const game = await this.gameService.startGameFromLobby(lobby);
 
+      console.log(`Game started for lobby ${game._id}`);
+
       // Emitujemy event o rozpoczęciu gry do wszystkich graczy w pokoju lobby
-      this.server.to(`lobby_${lobby._id}`).emit('gameStarted', { game });
+      this.server.to(`lobby_${game.lobbyId}`).emit('gameStarted', { game });
 
       // Inicjalizujemy pierwszą turę
       const updatedGame = await this.turnService.startTurn({
         gameId: game._id.toString(),
-        teamName: lobby.teams[0].teamName,
+        teamName: game.teamsInfo[0].teamName,
       });
 
+      console.log(`First turn started for team: ${game.teamsInfo[0].teamName}`);
+
       // Emitujemy event o rozpoczęciu tury
-      this.server.to(`lobby_${lobby._id}`).emit(
+      this.server.to(`lobby_${game.lobbyId}`).emit(
         'turnStarted',
         new TurnStartedDto({
           message: `Turn started for team: ${updatedGame.currentTurn.teamName}. ${updatedGame.currentTurn.describer} is the describer!`,
@@ -162,8 +200,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }),
       );
 
+      console.log(`Turn started event emitted for lobby: ${game.lobbyId}`);
+
       // Rozpoczynamy timer tury
-      this.startTurnTimer(updatedGame, lobby._id.toString());
+      this.startTurnTimer(updatedGame, game.lobbyId.toString());
     } catch (error) {
       console.error('Error starting game:', error);
       client.emit('error', { message: 'Failed to start game' });
@@ -184,13 +224,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const { gameOver, game: nextTurn } =
           await this.turnService.startNextTurn(game._id.toString());
         if (gameOver) {
-          const lobby = await this.lobbyService.getLobbyById(lobbyId);
-          if (!lobby) {
-            console.error('Lobby not found when ending game.');
-            return;
-          }
-
-          const teamsInfo = lobby.teams;
+          const teamsInfo = nextTurn.teamsInfo;
           // Find max score team/s
           const maxScore = Math.max(...teamsInfo.map((team) => team.score));
           const winningTeams = teamsInfo.filter(

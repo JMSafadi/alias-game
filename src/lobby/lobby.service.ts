@@ -52,10 +52,12 @@ export class LobbyService {
         currentPlayers: lobbyObject.currentPlayers,
         players: lobbyObject.players.map((player) => ({
           username: userMap.get(player.userId.toString()),
+          userId: player.userId,
         })),
       };
     });
   }
+
   async getLobbyById(lobbyId: string): Promise<any> {
     if (!mongoose.Types.ObjectId.isValid(lobbyId)) {
       throw new BadRequestException(`Invalid lobby ID: ${lobbyId}.`);
@@ -87,11 +89,12 @@ export class LobbyService {
       currentPlayers: lobbyObject.currentPlayers,
       players: lobbyObject.players.map((player) => ({
         username: userMap.get(player.userId.toString()),
+        userId: player.userId,
       })),
     };
   }
 
-  async createLobby(createLobbyDto: CreateLobbyDto) {
+  async createLobby(createLobbyDto: CreateLobbyDto): Promise<any> {
     const ownerId = createLobbyDto.userId;
     const user = await this.userModel.findById(ownerId);
 
@@ -130,19 +133,15 @@ export class LobbyService {
 
     const lobbyObject = savedLobby.toObject();
 
-    delete lobbyObject.ownerId; //Replace the ownerId with lobbyOwner (username).
-    delete lobbyObject._id;
-    delete lobbyObject.__v;
-    delete lobbyObject.teamCount;
-
     return {
       //Filter and format the data to expose.
       lobbyOwner: user.username,
-
-      ...lobbyObject,
-
+      playersPerTeam: lobbyObject.playersPerTeam,
+      maxPlayers: lobbyObject.maxPlayers,
+      currentPlayers: lobbyObject.currentPlayers,
       players: savedLobby.players.map((player) => ({
         username: user.username,
+        userId: player.userId,
       })),
     };
   }
@@ -206,10 +205,6 @@ export class LobbyService {
       users.map((user) => [user._id.toString(), user.username]),
     );
 
-    delete lobbyObject._id;
-    delete lobbyObject.__v;
-    delete lobbyObject.teamCount;
-
     return {
       //Filter and format the data to expose.
       lobbyID: savedLobby._id,
@@ -219,11 +214,16 @@ export class LobbyService {
       currentPlayers: lobbyObject.currentPlayers,
       players: lobbyObject.players.map((player) => ({
         username: userMap.get(player.userId.toString()),
+        userId: player.userId,
       })),
     };
   }
 
-  async assignTeams(assignTeamsDto: AssignTeamsDto): Promise<any> {
+  async assignTeams(assignTeamsDto: AssignTeamsDto): Promise<{
+    lobbyId: string;
+    teams: { teamName: string; players: string[] }[];
+    message: string;
+  }> {
     // **1. Validate the provided lobby ID**
     if (!mongoose.Types.ObjectId.isValid(assignTeamsDto.lobbyId)) {
       throw new BadRequestException(
@@ -239,13 +239,13 @@ export class LobbyService {
       );
     }
 
-    // **3. Extract all player IDs from the teams in `assignTeamsDto`**
+    // **3. Extract all player IDs from the teams in assignTeamsDto**
     const allPlayers = assignTeamsDto.teams.flatMap((team) => team.players);
 
     // **4. Get the IDs of all players currently in the lobby**
     const lobbyPlayerIds = lobby.players.map((player) => player.userId);
 
-    // **5. Check if any players in `assignTeamsDto` are not in the lobby**
+    // **5. Check if any players in assignTeamsDto are not in the lobby**
     const missingPlayers = allPlayers.filter(
       (playerId) => !lobbyPlayerIds.includes(playerId),
     );
@@ -274,7 +274,7 @@ export class LobbyService {
       return { ...player, team: playerTeamMap.get(player.userId) || '' };
     });
 
-    // **8. Update `rounds` and `timePerTurn`**
+    // **8. Update rounds and timePerTurn**
     lobby.rounds = assignTeamsDto.rounds;
     lobby.timePerTurn = assignTeamsDto.timePerTurn;
 
@@ -304,7 +304,7 @@ export class LobbyService {
     await lobby.save();
 
     return {
-      lobbyId: lobby._id,
+      lobbyId: lobby._id.toString(),
       teams: teamsWithUsernames,
       message: 'Teams assigned successfully. The game is ready to start!',
     };

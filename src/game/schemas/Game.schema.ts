@@ -1,5 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
+
+@Schema()
+export class TeamInfo {
+  @Prop({ required: true })
+  teamName: string;
+
+  @Prop({ type: [String], required: true })
+  players: string[];
+
+  @Prop({ default: 0 })
+  score: number; // Wynik drużyny
+}
+
+export const TeamInfoSchema = SchemaFactory.createForClass(TeamInfo);
 
 @Schema()
 export class Turn {
@@ -20,9 +34,10 @@ export class Turn {
 }
 
 export const TurnSchema = SchemaFactory.createForClass(Turn);
-
 @Schema()
 export class Game extends Document {
+  _id: Types.ObjectId;
+
   @Prop({ required: true })
   lobbyId: string;
 
@@ -34,6 +49,9 @@ export class Game extends Document {
 
   @Prop({ type: TurnSchema })
   currentTurn: Turn;
+
+  @Prop({ type: [TeamInfoSchema], required: true })
+  teamsInfo: TeamInfo[];
 
   @Prop({ default: 0 })
   currentRound: number;

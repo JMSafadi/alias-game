@@ -29,17 +29,19 @@ export class GameService {
 
   // Metoda do uruchamiania gry na podstawie danych lobby
   async startGameFromLobby(lobby: Lobby): Promise<Game> {
+    const lobbyObject = lobby.toObject();
     if (
-      !lobby.teams ||
-      !Array.isArray(lobby.teams) ||
-      lobby.teams.length < 2 || // Sprawdzenie, czy są co najmniej dwie drużyny
-      lobby.teams.some(
+      !lobbyObject.teams ||
+      !Array.isArray(lobbyObject.teams) ||
+      lobbyObject.teams.length < 2 ||
+      lobbyObject.teams.some(
         (team) =>
-          !team.teamName || // Sprawdzenie, czy drużyna ma nazwę
-          !Array.isArray(team.players) || // Sprawdzenie, czy gracze są w tablicy
-          team.players.length === 0, // Sprawdzenie, czy drużyna ma przypisanych graczy
+          !team.teamName ||
+          !Array.isArray(team.players) ||
+          team.players.length === 0,
       )
     ) {
+      console.log('Teams are not properly assigned:', lobbyObject.teams);
       throw new BadRequestException(
         'Teams are not properly assigned in the lobby',
       );
@@ -142,14 +144,22 @@ export class GameService {
       const score = this.scoreService.calculateScore(game, elapsedTime);
 
       // Add points to the team, save the game state
-      await this.scoreService.updateTeamScore(lobby._id, senderTeamName, score);
+      await this.scoreService.updateTeamScore(
+        lobby._id.toString(),
+        senderTeamName,
+        score,
+      );
       game.currentTurn.isTurnActive = false;
 
       await game.save();
       return { correct: true, score };
     } else {
       // Deduct points for incorrect guess
-      await this.scoreService.updateTeamScore(lobby._id, senderTeamName, -5);
+      await this.scoreService.updateTeamScore(
+        lobby._id.toString(),
+        senderTeamName,
+        -5,
+      );
       await game.save();
       return { correct: false };
     }

@@ -122,12 +122,13 @@ export class TurnService {
     }
 
     // Get next team to change turn
-    const nextTeam = await this.teamService.getNextTeam(lobby.lobbyId, game.currentTurn.teamName);
+    const nextTeam = await this.teamService.getNextTeam(
+      lobby.lobbyId,
+      game.currentTurn.teamName,
+    );
 
     // Find team playing
-    const currentTeam = lobby.teams.find(
-      (team) => team.teamName === nextTeam,
-    );
+    const currentTeam = lobby.teams.find((team) => team.teamName === nextTeam);
     if (!currentTeam) {
       throw new NotFoundException('Team not found');
     }

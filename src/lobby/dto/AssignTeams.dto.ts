@@ -24,6 +24,10 @@ class Team {
     example: ['player1', 'player2'],
   })
   @IsArray()
+  @IsNotEmpty({
+    each: true,
+    message: 'Each team must have at least one player.',
+  })
   @IsString({ each: true })
   players: string[];
 }
