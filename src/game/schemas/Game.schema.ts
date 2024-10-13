@@ -38,7 +38,7 @@ export const TurnSchema = SchemaFactory.createForClass(Turn);
 export class Game extends Document {
   _id: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop()
   lobbyId: string;
 
   @Prop({ required: true, min: 5, max: 10 })

@@ -3,6 +3,9 @@ import { Document } from 'mongoose';
 
 @Schema()
 export class Lobby extends Document {
+  @Prop()
+  lobbyId: string;
+
   @Prop({ required: true })
   ownerId: string;
 

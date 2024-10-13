@@ -171,9 +171,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(`Teams are properly assigned in lobby: ${lobbyId}`);
 
       // Uruchamiamy grę na podstawie danych lobby
+      console.log('starting game with lobby: ', lobby)
       const game = await this.gameService.startGameFromLobby(lobby);
 
-      console.log(`Game started for lobby ${game._id}`);
+      console.log(`Game started for lobby ${game.lobbyId}`);
 
       // Emitujemy event o rozpoczęciu gry do wszystkich graczy w pokoju lobby
       this.server.to(`lobby_${game.lobbyId}`).emit('gameStarted', { game });

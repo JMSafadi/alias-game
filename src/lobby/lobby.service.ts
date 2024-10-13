@@ -85,6 +85,9 @@ export class LobbyService {
 
     return {
       //Filter and format the data to expose.
+      lobbyId: lobbyObject._id,
+      rounds: lobbyObject.rounds,
+      timePerTurn: lobbyObject.timePerTurn,
       lobbyOwner: userMap.get(ownerId.toString()),
       playersPerTeam: lobbyObject.playersPerTeam,
       maxPlayers: lobbyObject.maxPlayers,

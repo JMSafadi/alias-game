@@ -48,13 +48,13 @@ export class GameService {
     }
 
     console.log('Lobby teams in startGameFromLobby:', lobby.teams);
-
+    console.log('entire lobby: ', lobby)
     lobby.teams.forEach((team, index) => {
       console.log(`Team ${index + 1}:`, team);
     });
 
     const newGame = new this.gameModel({
-      lobbyId: lobby._id,
+      lobbyId: lobby.lobbyId.toString(),
       currentRound: 1,
       rounds: lobby.rounds,
       timePerTurn: lobby.timePerTurn,
