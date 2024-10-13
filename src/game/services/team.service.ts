@@ -1,11 +1,18 @@
-import { Injectable } from '@nestjs/common';
-import { Game } from '../schemas/Game.schema';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { LobbyService } from 'src/lobby/lobby.service';
 
 @Injectable()
 export class TeamService {
-  getNextTeam(game: Game): string {
-    const teams = game.teamsInfo.map((team) => team.teamName);
-    const currentIndex = teams.indexOf(game.currentTurn.teamName);
+  constructor(private readonly lobbyService: LobbyService) {}
+
+  async getNextTeam(lobbyId: string, currentTeamName: string): Promise<string> {
+    const lobby = await this.lobbyService.getLobbyById(lobbyId);
+    if (!lobby) {
+      throw new NotFoundException('Lobby not found');
+    }
+
+    const teams = lobby.teams.map((team) => team.teamName);
+    const currentIndex = teams.indexOf(currentTeamName);
     return teams[(currentIndex + 1) % teams.length];
   }
 }
