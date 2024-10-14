@@ -1,7 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional } from 'class-validator';
-import { Role } from '../../modules/common/roles/role.enum';
-
 export class SignUpDto {
     @ApiProperty({
         description: 'User email address',
@@ -30,19 +28,5 @@ export class SignUpDto {
     @IsString()
     @MinLength(6, { message: 'Password must be at least 6 characters long.' })
     readonly password: string;
-
-    @ApiPropertyOptional({
-        description: 'Roles assigned to the user (not needed for regular users)',
-        enum: Role,
-        examples: {
-            adminExample: {
-                summary: 'Role for admin',
-                value: Role.Admin,
-            },
-        },
-    })
-    @IsOptional()
-    @IsString()
-    readonly roles: Role;
 }
 
