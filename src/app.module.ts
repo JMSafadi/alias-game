@@ -12,6 +12,7 @@ import { LobbyModule } from './lobby/lobby.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './modules/common/guards/roles.guard';
+import { MeModule } from './me/me.module';
 
 /**
  * The root module of the application.
@@ -58,6 +59,7 @@ import { RolesGuard } from './modules/common/guards/roles.guard';
     ChatModule,
     GameModule,
     LobbyModule,
+    MeModule,
   ],
   controllers: [
     /**
@@ -79,4 +81,4 @@ import { RolesGuard } from './modules/common/guards/roles.guard';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
