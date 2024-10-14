@@ -93,6 +93,8 @@ export class LobbyService {
         userId: player.userId,
       })),
       teams: lobbyObject.teams,
+      rounds: lobbyObject.rounds,
+      timePerTurn: lobbyObject.timePerTurn,
     };
   }
 
@@ -141,6 +143,8 @@ export class LobbyService {
       playersPerTeam: lobbyObject.playersPerTeam,
       maxPlayers: lobbyObject.maxPlayers,
       currentPlayers: lobbyObject.currentPlayers,
+      rounds: lobbyObject.rounds,
+      timePerTurn: lobbyObject.timePerTurn,
       players: savedLobby.players.map((player) => ({
         username: user.username,
         userId: player.userId,
