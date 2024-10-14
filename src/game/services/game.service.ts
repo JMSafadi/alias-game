@@ -11,13 +11,19 @@ import mongoose, { Model } from 'mongoose';
 import { Game } from '../schemas/Game.schema';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { LobbyService } from 'src/lobby/lobby.service';
-import { Lobby } from 'src/schemas/Lobby.schema';
 
 interface CheckWordGuessResponse {
   correct: boolean;
   score?: number;
 }
 
+interface LobbyData {
+  lobbyId: string;
+  rounds: number;
+  timePerTurn: number;
+  teams: { teamName: string; players: string[] }[];
+  players: { username: string; userId: string }[];
+}
 @Injectable()
 export class GameService {
   constructor(
@@ -28,7 +34,7 @@ export class GameService {
   ) {}
 
   // Metoda do uruchamiania gry na podstawie danych lobby
-  async startGameFromLobby(lobby: Lobby): Promise<Game> {
+  async startGameFromLobby(lobby: LobbyData): Promise<Game> {
     // const lobbyObject = lobby.toObject();
     if (
       !lobby.teams ||
@@ -41,20 +47,19 @@ export class GameService {
           team.players.length === 0,
       )
     ) {
-      console.log('Teams are not properly assigned:', lobby.teams);
       throw new BadRequestException(
         'Teams are not properly assigned in the lobby',
       );
     }
 
-    console.log('Lobby teams in startGameFromLobby:', lobby.teams);
+    console.log('Lobby startGameFromLobby:', lobby);
 
     lobby.teams.forEach((team, index) => {
       console.log(`Team ${index + 1}:`, team);
     });
 
     const newGame = new this.gameModel({
-      lobbyId: lobby._id,
+      lobbyId: lobby.lobbyId,
       currentRound: 1,
       rounds: lobby.rounds,
       timePerTurn: lobby.timePerTurn,

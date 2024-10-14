@@ -71,20 +71,20 @@ export class LobbyService {
     const lobbyObject = lobby.toObject();
     const ownerId = lobbyObject.ownerId;
     const playerIds = lobbyObject.players.map((player) => player.userId);
-    // 
+    //
     console.log('lobby object; ', lobbyObject);
-    // 
+    //
     const userIds = [ownerId, ...playerIds];
     const users = await this.userModel
       .find({ _id: { $in: userIds } }, 'username')
       .exec();
-    
+
     const userMap = new Map(
       users.map((user) => [user._id.toString(), user.username]),
     );
 
     return {
-      //Filter and format the data to expose.
+      lobbyId: lobbyObject._id.toString(),
       lobbyOwner: userMap.get(ownerId.toString()),
       playersPerTeam: lobbyObject.playersPerTeam,
       maxPlayers: lobbyObject.maxPlayers,
@@ -94,6 +94,8 @@ export class LobbyService {
         userId: player.userId,
       })),
       teams: lobbyObject.teams,
+      rounds: lobbyObject.rounds,
+      timePerTurn: lobbyObject.timePerTurn,
     };
   }
 
@@ -142,6 +144,8 @@ export class LobbyService {
       playersPerTeam: lobbyObject.playersPerTeam,
       maxPlayers: lobbyObject.maxPlayers,
       currentPlayers: lobbyObject.currentPlayers,
+      rounds: lobbyObject.rounds,
+      timePerTurn: lobbyObject.timePerTurn,
       players: savedLobby.players.map((player) => ({
         username: user.username,
         userId: player.userId,
