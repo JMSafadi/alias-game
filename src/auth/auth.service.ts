@@ -22,7 +22,7 @@ export class AuthService {
     // Inicjalizacja JwtService z odpowiednią konfiguracją
     this.jwtService = new JwtService({
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '24h' },
     });
   }
 

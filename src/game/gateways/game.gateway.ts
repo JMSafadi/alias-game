@@ -18,6 +18,8 @@ import { SendMessageDto } from '../dto/send-message.dto';
 import { TurnStartedDto } from '../dto/turn-started.dto';
 import * as jwt from 'jsonwebtoken';
 import { Game } from '../schemas/Game.schema';
+import { SimilarityService } from 'src/utils/similarity.service';
+import { NotFoundException } from '@nestjs/common';
 
 @WebSocketGateway({ namespace: '/game', cors: { origin: '*' } })
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -30,7 +32,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly turnService: TurnService,
     private readonly timerService: TimerService,
     private readonly messageService: MessageService,
-    private readonly scoreService: ScoreService,
+    private readonly similarityService: SimilarityService,
+    // private readonly scoreService: ScoreService,
   ) {}
 
   async handleConnection(client: Socket): Promise<void> {
@@ -124,50 +127,92 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
       const currentTurn = game.currentTurn;
 
-      if (role === 'guesser' && currentTurn.isTurnActive) {
-        const checkWordGuessResponse =
-          await this.gameService.checkWordGuess(sendMessageDto);
-        console.log('checkwordresponse, ', checkWordGuessResponse);
-
-        if (checkWordGuessResponse.correct === true) {
-          // Emit correct guess event with score
-          this.server.to(`lobby_${game.lobbyId}`).emit('correct_guess', {
-            message: `Player ${sendMessageDto.sender} has guessed the word correctly!`,
-            team: currentTurn.teamName,
-            score: checkWordGuessResponse.score,
-          });
-          // End turn and emit event
-          await this.turnService.endTurn(sendMessageDto.gameId);
-          // Init next turn
-          const nextTurnResponse = await this.turnService.startNextTurn(
-            sendMessageDto.gameId,
-          );
-          if (nextTurnResponse.gameOver) {
-            this.server.to(`lobby_${game.lobbyId}`).emit('game_over', {
-              message: 'Game is over!',
-              game: nextTurnResponse.game,
+      if (currentTurn.isTurnActive) {
+        if (role === 'guesser') {
+          // guess logic
+          const checkWordGuessResponse =
+            await this.gameService.checkWordGuess(sendMessageDto);
+          if (checkWordGuessResponse.correct) {
+            // if guess correct
+            // Emit correct guess event with score
+            this.server.to(`lobby_${game.lobbyId}`).emit('correct_guess', {
+              message: `Player ${sendMessageDto.sender} has guessed the word correctly!`,
+              team: currentTurn.teamName,
+              score: checkWordGuessResponse.score,
             });
+            // end turn
+            await this.turnService.endTurn(sendMessageDto.gameId);
+            // Init next turn
+            const nextTurnResponse = await this.turnService.startNextTurn(
+              sendMessageDto.gameId,
+            );
+            if (nextTurnResponse.gameOver) {
+              this.server.to(`lobby_${game.lobbyId}`).emit('game_over', {
+                message: 'Game is over!',
+                game: nextTurnResponse.game,
+              });
+            }
           } else {
-            // Emit next turn event
-            this.server.to(`lobby_${game.lobbyId}`).emit('start_next_turn', {
-              message: `Next turn started for team ${nextTurnResponse.game.currentTurn.teamName}.`,
-              game: nextTurnResponse.game,
+            // incorrect guess
+            // Emit incorrect guess event
+            this.server.to(`lobby_${game.lobbyId}`).emit('incorrect_guess', {
+              message: `Player ${sendMessageDto.sender} guessed the word incorrectly.`,
+              team: currentTurn.teamName,
+            });
+          }
+        } else if (role === 'describer') {
+          const team = game.teamsInfo.find(
+            (team) => team.teamName === currentTurn.teamName,
+          );
+          if (!team) {
+            throw new NotFoundException('Tean not found');
+          }
+          // Calculate similarity
+          const describerSimilarity =
+            this.similarityService.calculateSimilarityText(
+              sendMessageDto.content,
+              currentTurn.wordToGuess,
+            );
+          if (describerSimilarity > 70 && describerSimilarity < 90) {
+            team.score -= 10;
+            console.log('Lost 10 points. score updated:', team.score);
+            // Emit penalty event
+            this.server.to(`lobby_${game.lobbyId}`).emit('points_deducted', {
+              message: `10 points have been deducted from ${currentTurn.teamName} for using similar words.`,
+              team: currentTurn.teamName,
+              score: team.score,
+            });
+          } else if (describerSimilarity < 50 && describerSimilarity < 70) {
+            // Warning event. Can't use too similar words.
+            console.log(
+              'Warning. Cant use similar words to describe:',
+              team.score,
+            );
+            this.server.to(`lobby_${game.lobbyId}`).emit('warning', {
+              message: `WARNING: Player ${sendMessageDto.sender}, you can't use words that are too similar.`,
+              team: currentTurn.teamName,
+            });
+          } else if (describerSimilarity === 100) {
+            team.score -= 20;
+            console.log('Lost 20 points. score updated:', team.score);
+            // Emit bigger penalty for using exact word
+            this.server.to(`lobby_${game.lobbyId}`).emit('points_deducted', {
+              message: `20 points have been deducted from ${currentTurn.teamName} for using the exact word.`,
+              team: currentTurn.teamName,
+              score: team.score,
             });
           }
         }
-      } else {
-        // Emit incorrect guess event
-        this.server.to(`lobby_${game.lobbyId}`).emit('incorrect_guess', {
-          message: `Player ${sendMessageDto.sender} guessed the word incorrectly.`,
-          team: currentTurn.teamName,
-        });
+        await game.save();
       }
       // Save and broadcast the message
       const message = await this.messageService.saveMessage(sendMessageDto);
-      console.log('Message saved successfully')
+      console.log('Message saved successfully');
       this.server
         .to(`lobby_${message.lobbyId}`)
         .emit('receive_message', message);
+
+      // await game.save();
     } catch (error) {
       console.error('Error handling message:', error);
       client.emit('error', { message: 'Failed to handle message' });
@@ -255,7 +300,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       game.timePerTurn,
       async () => {
         const turn = await this.turnService.endTurn(game._id.toString());
-        this.server.to(`lobby_${lobbyId}`).emit('turnEnded', {
+        this.server.to(`lobby_${lobbyId}`).emit('turn_ended', {
           message: `Turn ended due to timeout for ${turn.currentTurn.teamName}. The word was: ${turn.currentTurn.wordToGuess}`,
         });
 
@@ -288,7 +333,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         } else {
           // Emit turnStarted event with TurnStartedDto
           this.server.to(`lobby_${lobbyId}`).emit(
-            'turnStarted',
+            'turn_started',
             new TurnStartedDto({
               message: `Turn started for team: ${nextTurn.currentTurn.teamName}. ${nextTurn.currentTurn.describer} is the describer!`,
               round: nextTurn.currentRound,

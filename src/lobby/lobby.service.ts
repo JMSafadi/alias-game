@@ -93,8 +93,6 @@ export class LobbyService {
         userId: player.userId,
       })),
       teams: lobbyObject.teams,
-      rounds: lobbyObject.rounds,
-      timePerTurn: lobbyObject.timePerTurn,
     };
   }
 
