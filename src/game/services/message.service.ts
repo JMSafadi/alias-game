@@ -14,8 +14,6 @@ export class MessageService {
   ) {}
 
   async saveMessage(sendMessageDto: SendMessageDto): Promise<Message> {
-    console.log('sendMessageDto:', sendMessageDto);
-
     if (!sendMessageDto.content || !sendMessageDto.sender) {
       console.error(
         'Content or sender is missing in the received message DTO:',
@@ -23,7 +21,6 @@ export class MessageService {
       );
       throw new Error('Content and sender are required');
     }
-
     const createdMessage = new this.messageModel({
       content: sendMessageDto.content,
       sender: sendMessageDto.sender,
@@ -31,10 +28,10 @@ export class MessageService {
       messageType: sendMessageDto.messageType,
       senderTeamName: sendMessageDto.senderTeamName,
       gameId: sendMessageDto.gameId,
+      lobbyId: sendMessageDto.lobbyId,
       role: sendMessageDto.role,
     });
 
-    console.log('createdMessage:', createdMessage);
     return createdMessage.save();
   }
 

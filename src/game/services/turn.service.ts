@@ -58,12 +58,6 @@ export class TurnService {
       game.currentRound++;
       game.playingTurn++;
     }
-
-    console.log('Initializing currentTurn with:');
-    console.log('teamName:', startTurnDto.teamName);
-    console.log('describer:', describer);
-    console.log('guessers:', guessers);
-
     // Set next turn
     // Update current turn state and generate word
     game.currentTurn = {

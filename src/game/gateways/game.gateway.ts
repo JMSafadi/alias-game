@@ -1,3 +1,4 @@
+import { ScoreService } from './../services/score.service';
 import {
   ConnectedSocket,
   MessageBody,
@@ -29,6 +30,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly turnService: TurnService,
     private readonly timerService: TimerService,
     private readonly messageService: MessageService,
+    private readonly scoreService: ScoreService,
   ) {}
 
   async handleConnection(client: Socket): Promise<void> {
@@ -101,7 +103,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         sendMessageDto.sender,
       );
       sendMessageDto.role = role;
-
+      console.log('role: ', role);
       // Validate permissions
       if (
         !this.hasPermissionToSendMessage(
@@ -117,9 +119,52 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
+      const game = await this.gameService.getGameById(
+        sendMessageDto.gameId.toString(),
+      );
+      const currentTurn = game.currentTurn;
+
+      if (role === 'guesser' && currentTurn.isTurnActive) {
+        const checkWordGuessResponse =
+          await this.gameService.checkWordGuess(sendMessageDto);
+        console.log('checkwordresponse, ', checkWordGuessResponse);
+
+        if (checkWordGuessResponse.correct === true) {
+          // Emit correct guess event with score
+          this.server.to(`lobby_${game.lobbyId}`).emit('correct_guess', {
+            message: `Player ${sendMessageDto.sender} has guessed the word correctly!`,
+            team: currentTurn.teamName,
+            score: checkWordGuessResponse.score,
+          });
+          // End turn and emit event
+          await this.turnService.endTurn(sendMessageDto.gameId);
+          // Init next turn
+          const nextTurnResponse = await this.turnService.startNextTurn(
+            sendMessageDto.gameId,
+          );
+          if (nextTurnResponse.gameOver) {
+            this.server.to(`lobby_${game.lobbyId}`).emit('game_over', {
+              message: 'Game is over!',
+              game: nextTurnResponse.game,
+            });
+          } else {
+            // Emit next turn event
+            this.server.to(`lobby_${game.lobbyId}`).emit('start_next_turn', {
+              message: `Next turn started for team ${nextTurnResponse.game.currentTurn.teamName}.`,
+              game: nextTurnResponse.game,
+            });
+          }
+        }
+      } else {
+        // Emit incorrect guess event
+        this.server.to(`lobby_${game.lobbyId}`).emit('incorrect_guess', {
+          message: `Player ${sendMessageDto.sender} guessed the word incorrectly.`,
+          team: currentTurn.teamName,
+        });
+      }
       // Save and broadcast the message
       const message = await this.messageService.saveMessage(sendMessageDto);
-      console.log('Message saved successfully:', message);
+      console.log('Message saved successfully')
       this.server
         .to(`lobby_${message.lobbyId}`)
         .emit('receive_message', message);
@@ -136,8 +181,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<void> {
     try {
       const lobbyId = data.lobbyId;
-
-      console.log(`Received lobbyId: ${lobbyId}`);
 
       // Pobieramy lobby na podstawie lobbyId
       const lobby = await this.lobbyService.getLobbyById(lobbyId);
@@ -168,28 +211,25 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      console.log(`Teams are properly assigned in lobby: ${lobbyId}`);
-
       // Uruchamiamy grę na podstawie danych lobby
-      console.log('starting game with lobby: ', lobby)
       const game = await this.gameService.startGameFromLobby(lobby);
 
       console.log(`Game started for lobby ${game.lobbyId}`);
 
       // Emitujemy event o rozpoczęciu gry do wszystkich graczy w pokoju lobby
-      this.server.to(`lobby_${game.lobbyId}`).emit('gameStarted', { game });
+      this.server.to(`lobby_${game.lobbyId}`).emit('game_started', {
+        message: 'Game started!',
+        game,
+      });
 
       // Inicjalizujemy pierwszą turę
       const updatedGame = await this.turnService.startTurn({
         gameId: game._id.toString(),
         teamName: game.teamsInfo[0].teamName,
       });
-
-      console.log(`First turn started for team: ${game.teamsInfo[0].teamName}`);
-
       // Emitujemy event o rozpoczęciu tury
       this.server.to(`lobby_${game.lobbyId}`).emit(
-        'turnStarted',
+        'turn_started',
         new TurnStartedDto({
           message: `Turn started for team: ${updatedGame.currentTurn.teamName}. ${updatedGame.currentTurn.describer} is the describer!`,
           round: updatedGame.currentRound,
@@ -200,9 +240,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           describer: updatedGame.currentTurn.describer,
         }),
       );
-
-      console.log(`Turn started event emitted for lobby: ${game.lobbyId}`);
-
       // Rozpoczynamy timer tury
       this.startTurnTimer(updatedGame, game.lobbyId.toString());
     } catch (error) {
