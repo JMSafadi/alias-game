@@ -59,7 +59,6 @@ describe('AuthService', () => {
                 email: 'newuser@example.com',
                 username: 'newuser',
                 password: 'password123',
-                roles: Role.User,
             };
 
             jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword');
@@ -76,7 +75,6 @@ describe('AuthService', () => {
                 email: 'newuser@example.com',
                 username: 'newuser',
                 password: 'password123',
-                roles: Role.User,
             };
 
             userModel.create.mockRejectedValue({
@@ -94,7 +92,6 @@ describe('AuthService', () => {
                 email: 'newuser@example.com',
                 username: 'newuser',
                 password: 'password123',
-                roles: Role.User,
             };
 
             userModel.create.mockRejectedValue({

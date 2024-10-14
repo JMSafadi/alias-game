@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AdminSeedService } from './users/seeders/create-admin.seed';
 
 /**
  * Bootstrap function to initialize and start the NestJS application.
@@ -25,6 +26,10 @@ async function bootstrap() {
 
   // Use global validation pipe for all incoming requests
   app.useGlobalPipes(new ValidationPipe());
+
+  //Seeders
+  const adminSeedService = app.get(AdminSeedService);
+  await adminSeedService.seedAdmin();
 
   // Start the application server on port 3000
   await app.listen(3000);

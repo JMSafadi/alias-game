@@ -3,8 +3,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/schemas/User.schema';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { RolesGuard } from 'src/modules/common/guards/roles.guard';
 import { AuthModule } from 'src/auth/auth.module';
+import { AdminSeedService } from './seeders/create-admin.seed';
 
 @Module({
   imports: [
@@ -16,8 +16,8 @@ import { AuthModule } from 'src/auth/auth.module';
     ]),
     AuthModule,
   ],
-  providers: [UsersService],
+  providers: [UsersService, AdminSeedService],
   controllers: [UsersController],
-  exports: [UsersService],
+  exports: [UsersService, AdminSeedService],
 })
 export class UsersModule { }

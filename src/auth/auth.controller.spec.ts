@@ -4,7 +4,6 @@ import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { BadRequestException } from '@nestjs/common';
-import { Role } from '../modules/common/roles/role.enum';
 
 describe('AuthController', () => {
     let authController: AuthController;
@@ -34,7 +33,6 @@ describe('AuthController', () => {
                 email: 'test@example.com',
                 username: 'testuser',
                 password: 'password123',
-                roles: Role.User,
             };
 
             const mockSignUpResponse = { message: 'User registered successfully' };
@@ -50,7 +48,6 @@ describe('AuthController', () => {
                 email: 'test@example.com',
                 username: 'testuser',
                 password: 'password123',
-                roles: Role.User,
             };
 
             const mockSignUpResponse = { message: 'User registered successfully' };
@@ -66,7 +63,6 @@ describe('AuthController', () => {
                 email: 'invalidEmail',
                 username: 'user',
                 password: 'pass',
-                roles: Role.User,
             };
 
             authService.signUp = jest.fn().mockRejectedValue(new BadRequestException('Invalid signup data'));
