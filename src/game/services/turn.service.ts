@@ -5,7 +5,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { StartTurnDto } from '../dto/start-turn.dto';
 import { TeamService } from './team.service';
 import { WordService } from './words.service';
-import { LobbyService } from 'src/lobby/lobby.service';
+import { LobbyService } from '../../lobby/lobby.service';
 
 interface StartNextTurnResponse {
   gameOver: boolean;

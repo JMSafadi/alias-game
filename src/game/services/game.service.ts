@@ -12,7 +12,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { Game } from '../schemas/Game.schema';
 import { SendMessageDto } from '../dto/send-message.dto';
-import { LobbyService } from 'src/lobby/lobby.service';
+import { LobbyService } from '../../lobby/lobby.service';
 import { Lobby } from 'src/schemas/Lobby.schema';
 
 interface CheckWordGuessResponse {

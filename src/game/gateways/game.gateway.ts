@@ -13,7 +13,7 @@ import { GameService } from './../services/game.service';
 import { TurnService } from '../services/turn.service';
 import { TimerService } from '../services/timer.service';
 import { MessageService } from '../services/message.service';
-import { LobbyService } from 'src/lobby/lobby.service';
+import { LobbyService } from '../../lobby/lobby.service';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { TurnStartedDto } from '../dto/turn-started.dto';
 import * as jwt from 'jsonwebtoken';
