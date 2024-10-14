@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { LobbyService } from 'src/lobby/lobby.service';
+import { LobbyService } from '../../lobby/lobby.service';
 
 @Injectable()
 export class TeamService {

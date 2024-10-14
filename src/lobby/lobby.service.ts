@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Lobby } from 'src/schemas/Lobby.schema';
-import { User } from 'src/schemas/User.schema';
+import { Lobby } from '../schemas/Lobby.schema';
+import { User } from '../schemas/User.schema';
 import { CreateLobbyDto } from './dto/CreateLobby.dto';
 import { JoinLobbyDto } from './dto/JoinLobby.dto';
 import { AssignTeamsDto } from './dto/AssignTeams.dto';

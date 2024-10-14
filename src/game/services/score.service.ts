@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LobbyService } from 'src/lobby/lobby.service';
+import { LobbyService } from '../../lobby/lobby.service';
 import { Game } from '../schemas/Game.schema';
 
 @Injectable()

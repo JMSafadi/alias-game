@@ -1,8 +1,8 @@
 import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Message } from 'src/game/schemas/Message.schema';
-import { SendMessageDto } from 'src/game/dto/send-message.dto';
-import { MessageService } from 'src/game/services/message.service';
+import { Message } from '../game/schemas/Message.schema';
+import { SendMessageDto } from '../game/dto/send-message.dto';
+import { MessageService } from '../game/services/message.service';
 
 /**
  * Controller responsible for handling chat-related HTTP requests.

@@ -3,6 +3,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { MessageService } from './message.service';
 import { Message, MessageDocument } from '../schemas/Message.schema';
 import { Model } from 'mongoose';
+import { SimilarityService } from '../../utils/similarity.service';
 
 class MockMessageModel {
   private data: Partial<MessageDocument>;
@@ -19,7 +20,10 @@ class MockMessageModel {
   });
 }
 
-// Casting our class to type Model<MessageDocument>
+const mockSimilarityService = {
+  checkGuess: jest.fn(),
+};
+
 const mockMessageModel = MockMessageModel as unknown as Model<MessageDocument>;
 
 describe('MessageService', () => {
@@ -32,6 +36,10 @@ describe('MessageService', () => {
         {
           provide: getModelToken(Message.name),
           useValue: mockMessageModel,
+        },
+        {
+          provide: SimilarityService,
+          useValue: mockSimilarityService,
         },
       ],
     }).compile();
@@ -56,7 +64,6 @@ describe('MessageService', () => {
         },
       ] as MessageDocument[];
 
-      // Mock the exec method
       const execMock = jest.fn().mockResolvedValueOnce(messages);
       (MockMessageModel.find as jest.Mock).mockReturnValueOnce({
         exec: execMock,

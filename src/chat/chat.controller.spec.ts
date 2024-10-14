@@ -1,51 +1,43 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
-import { MessageService } from 'src/game/services/message.service';
-import { Message, MessageDocument } from 'src/game/schemas/Message.schema';
-import { Model } from 'mongoose';
-// import { SendMessageDto } from 'src/game/dto/send-message.dto';
-class MockMessageModel {
-  private data: Partial<MessageDocument>;
-  public save: jest.Mock<Promise<this>, []>;
+import { ChatController } from './chat.controller';
+import { MessageService } from '../game/services/message.service';
+import { Message } from '../game/schemas/Message.schema';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
-  constructor(data: Partial<MessageDocument>) {
-    this.data = data;
-    this.save = jest.fn().mockResolvedValue(this);
-    Object.assign(this, data);
-  }
+describe('ChatController', () => {
+  let chatController: ChatController;
+  let messageService: MessageService;
 
-  static find = jest.fn().mockReturnValue({
-    exec: jest.fn().mockResolvedValue([] as MessageDocument[]),
-  });
-}
-
-// Casting our class to type Model<MessageDocument>
-const mockMessageModel = MockMessageModel as unknown as Model<MessageDocument>;
-
-describe('MessageService', () => {
-  let service: MessageService;
+  const mockMessageService = {
+    getMessages: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      controllers: [ChatController],
       providers: [
-        MessageService,
         {
-          provide: getModelToken(Message.name),
-          useValue: mockMessageModel,
+          provide: MessageService,
+          useValue: mockMessageService,
         },
       ],
     }).compile();
 
-    service = module.get<MessageService>(MessageService);
+    chatController = module.get<ChatController>(ChatController);
+    messageService = module.get<MessageService>(MessageService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(chatController).toBeDefined();
   });
 
-  describe('getMessages', () => {
-    it('should return an array of messages', async () => {
-      const messages = [
+  describe('getChatHistory', () => {
+    it('should return chat history successfully', async () => {
+      const mockMessages = [
         {
           content: 'Hello',
           sender: 'user123',
@@ -54,17 +46,28 @@ describe('MessageService', () => {
           senderTeamName: 'team1',
           role: 'member',
         },
-      ] as MessageDocument[];
+      ] as Message[];
 
-      // Mock the exec method
-      const execMock = jest.fn().mockResolvedValueOnce(messages);
-      (MockMessageModel.find as jest.Mock).mockReturnValueOnce({
-        exec: execMock,
-      });
+      mockMessageService.getMessages.mockResolvedValueOnce(mockMessages);
 
-      const result = await service.getMessages();
+      const result = await chatController.getChatHistory();
 
-      expect(result).toEqual(messages);
+      expect(result).toEqual(mockMessages);
+      expect(messageService.getMessages).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw an InternalServerErrorException when getMessages fails', async () => {
+      const errorMessage = 'Failed to retrieve chat history';
+
+      mockMessageService.getMessages.mockRejectedValueOnce(
+        new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR),
+      );
+
+      await expect(chatController.getChatHistory()).rejects.toThrow(
+        new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR),
+      );
+
+      expect(messageService.getMessages).toHaveBeenCalledTimes(1);
     });
   });
 });

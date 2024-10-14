@@ -6,12 +6,14 @@ import { TurnService } from './turn.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { NotFoundException } from '@nestjs/common';
+import { LobbyService } from '../../lobby/lobby.service';
 
 describe('Turn Service', () => {
   let turnService: TurnService;
   let gameModel: Model<Game> & { save: jest.Mock };
   let teamService: TeamService;
   let wordService: WordService;
+  let lobbyService: LobbyService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -36,6 +38,12 @@ describe('Turn Service', () => {
             generateWord: jest.fn(),
           },
         },
+        {
+          provide: LobbyService,
+          useValue: {
+            getLobbyById: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -45,6 +53,7 @@ describe('Turn Service', () => {
     );
     teamService = module.get<TeamService>(TeamService);
     wordService = module.get<WordService>(WordService);
+    lobbyService = module.get<LobbyService>(LobbyService);
   });
 
   it('Should be defined', () => {
@@ -71,15 +80,26 @@ describe('Turn Service', () => {
           teamName: 'Team A',
           wordToGuess: 'owl',
         },
+        lobbyId: 'lobbyId',
         save: jest.fn(),
       };
+
       jest.spyOn(gameModel, 'findById').mockResolvedValue(mockGame);
       jest.spyOn(wordService, 'generateWord').mockReturnValue('owl');
 
+      jest.spyOn(lobbyService, 'getLobbyById').mockResolvedValue({
+        id: 'lobbyId',
+        teams: [
+          { teamName: 'Team A', players: ['user1', 'user2'] },
+          { teamName: 'Team B', players: ['user2', 'user3'] },
+        ],
+      });
+      
       const result = await turnService.startTurn({
         gameId: '1',
         teamName: 'Team A',
       });
+
       expect(result).toEqual(mockGame);
       expect(mockGame.currentRound).toBe(1);
       expect(mockGame.playingTurn).toBe(1);
@@ -88,6 +108,7 @@ describe('Turn Service', () => {
       expect(mockGame.save).toHaveBeenCalled();
     });
   });
+  
   describe('endTurn', () => {
     it('Should throw NotFoundException if game is not found', async () => {
       jest.spyOn(gameModel, 'findById').mockResolvedValue(null);
@@ -115,6 +136,7 @@ describe('Turn Service', () => {
         NotFoundException,
       );
     });
+  
     it('Should update to next turn and save new game state', async () => {
       const mockGame = {
         currentRound: 1,
@@ -126,20 +148,34 @@ describe('Turn Service', () => {
         ],
         currentTurnStartTime: Date.now(),
         save: jest.fn(),
+        lobbyId: 'lobbyId',
         currentTurn: {
           teamName: 'Team B',
           wordToGuess: 'cat',
         },
       };
+  
       jest.spyOn(gameModel, 'findById').mockResolvedValue(mockGame);
-      jest.spyOn(teamService, 'getNextTeam').mockReturnValue('Team B');
+      
+      jest.spyOn(teamService, 'getNextTeam').mockResolvedValue('Team B');
+      
       jest.spyOn(wordService, 'generateWord').mockReturnValue('cat');
+  
+      jest.spyOn(lobbyService, 'getLobbyById').mockResolvedValue({
+        id: 'lobbyId',
+        teams: [
+          { teamName: 'Team A', players: ['user1', 'user2'] },
+          { teamName: 'Team B', players: ['user2', 'user3'] },
+        ],
+      });
+  
       const result = await turnService.startNextTurn('1');
+  
       expect(result.gameOver).toBe(false);
       expect(mockGame.playingTurn).toBe(2);
       expect(mockGame.currentTurn.teamName).toBe('Team B');
       expect(mockGame.currentTurn.wordToGuess).toBe('cat');
       expect(mockGame.save).toHaveBeenCalled();
     });
-  });
+  });  
 });
