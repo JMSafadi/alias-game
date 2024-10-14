@@ -111,4 +111,14 @@ export class UsersService {
     }
     return { message: `User with ID ${id} deleted successfully.` };
   }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return await this.userModel.findOne({ email }).exec();
+  }
+
+  async create(userData: { email: string; username: string; password: string; roles: string[] }): Promise<User> {
+    const newUser = new this.userModel(userData);
+    newUser.password = await bcrypt.hash(userData.password, 10);
+    return await newUser.save();
+  }
 }
