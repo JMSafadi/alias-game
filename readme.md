@@ -41,8 +41,33 @@ The game concludes after a predetermined number of rounds, with the highest-scor
 - **Database**: MongoDB
 
 ## Base URL
+http://localhost:3000
 
 ## Install
+Project uses **Docker** to simplify development enviroment. Here are steps to install and run project.  
+You must have installed in your local machine:
+- [Docker](https://www.docker.com/get-started)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+First, clone this repository to your machine:
+```bash
+git clone https://github.com/JMSafadi/alias-game/
+cd alias-game-app
+```
+
+Create and run containers with docker:
+```bash
+docker-compose up --build
+```
+To stop containers when you are done with application:
+```bash
+docker-compose down
+```
+If you want to delete volumes and restart database:
+```bash
+docker-compose down -v
+docker-compose up --build
+```
 
 ## Setting Up Environment Variables
 
@@ -62,8 +87,10 @@ Once you have set your environment variables, you can start the application with
 
 Make sure to keep your `.env` file private and not share it in version control. The `.env` file is listed in `.gitignore` to prevent it from being tracked by Git.
 
-## API Documentation
-
+## API
+The project also includes documented API using Swagger. This allows developers to explore and test endopoint directly from the Swagger UI, providing an interface for understandin the API's funcionality.  
+Visit locally: http://localhost:3000/api
+  
 ### 1. Endpoint /auth
 
 Route that authenticates users identities.
@@ -283,27 +310,27 @@ curl -X 'GET' '/lobby' \
 **Response:**
 
 ```json
-{
-  "lobbyID": "validID",
-  "lobbyOwner": "Player3",
-  "playersPerTeam": 2,
-  "maxPlayers": 4,
-  "currentPlayers": 4,
-  "players": [
     {
-      "username": "Player3"
-    },
-    {
-      "username": "Player11"
-    },
-    {
-      "username": "Player2"
-    },
-    {
-      "username": "Player5"
+        "lobbyID": "validID",
+        "lobbyOwner": "Player3",
+        "playersPerTeam": 2,
+        "maxPlayers": 4,
+        "currentPlayers": 4,
+        "players": [
+            {
+                "username": "Player3"
+            },
+            {
+                "username": "Player11"
+            },
+            {
+                "username": "Player2"
+            },
+            {
+                "username": "Player5"
+            }
+        ]
     }
-  ]
-}
 ```
 
 Error Responses:
@@ -537,6 +564,7 @@ Error Responses:
 
 ```
 404 The specified lobby does not exist.
+404 The specified lobby does not exist.
 400 Invalid Team Assignment: Some players are missing or already
 assigned.
 ```
@@ -552,7 +580,9 @@ Route that handles all chat functionalities within the game, allowing players to
 **Request:**
 
 ```bash
-curl -X 'POST' '/chat/send' -d {
+curl -X 'POST' '/chat/send' 
+-d 
+{
   "lobbyId": "123",
   "username": "John Doe",
   "message": "Let's start the game!"
@@ -608,7 +638,9 @@ Route that manages word validation and retrieves similar words to enhance gamepl
 **Request:**
 
 ```bash
-curl -X 'POST' '/words/validate' -d {
+curl -X 'POST' '/words/validate' 
+-d 
+{
   "word": "rabbit"
 }
 ```
@@ -641,10 +673,9 @@ curl -X 'GET' '/words/similar?word=rabbit'
 ```
 
 ## Socket Events
-
-`startGame`  
-Client sent event to start the game once teams and players have veen set up in a lobby.
-
+``startGame``  
+Client sent event to start the game once teams and players have been set up in a lobby.  
+  
 **Payload**
 
 ```json
@@ -754,6 +785,20 @@ If guess is correct:
 ```
 
 ## Database Schema
+### User model
+| Field                | Type       | Description                                                |
+| :--------------------| :----------| :----------------------------------------------------------|
+| `username`            |  `string`  | User name. (unique)                                       |
+| `password`             |  `string`  | User password.                          |
+
+
+### Chat model
+| Field                | Type       | Description                                                |
+| :--------------------| :----------| :----------------------------------------------------------|
+| `content`            |  `string`  | Content of the chat.                                       |
+| `sender`             |  `string`  | Identifier of the message sender.                          |
+| `timestamp`          |  `Date`    | Timestamp when the message was sent.                       |
+
 
 ### Game model
 
@@ -816,3 +861,9 @@ The application enforces strict validation of user input:
 ## Deployment
 
 ## Future Enhancements
+- **Raking system**: implement a ranking system to track and display user's score and achivements, making the game more competitive.
+  
+- **Private messaging**: enable private messages between game users.
+  
+- **Difficulty selection**: players will be allow to choose the difficulty level for the game, among other game options.
+  
