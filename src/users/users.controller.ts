@@ -8,10 +8,10 @@ import {
   Body,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { RolesGuard } from 'src/modules/common/guards/roles.guard';
-import { Role } from 'src/modules/common/roles/role.enum';
-import { Roles } from 'src/modules/common/roles/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../modules/common/guards/roles.guard';
+import { Role } from '../modules/common/roles/role.enum';
+import { Roles } from '../modules/common/roles/roles.decorator';
 import {
   ApiTags,
   ApiOperation,
