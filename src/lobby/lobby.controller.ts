@@ -29,7 +29,27 @@ export class LobbyController {
   async getAllLobbies() {
     return this.lobbyService.getAllLobbies();
   }
-  //Route to update an existing lobby.
+
+  /**
+   * Route to update an existing lobby.
+   * @param id The lobby ID.
+   * @param updateLobbyDto The data to update the lobby.
+   */
+  @ApiOperation({ summary: 'Update an existing lobby by ID' })
+  @ApiParam({ name: 'id', description: 'Lobby ID to update' })
+  @ApiBody({ type: UpdateLobbyDto, description: 'Data to update the lobby' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lobby updated successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Lobby not found.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data.',
+  })
   @Put(':id')
   async updateLobby(@Param('id') id: string, @Body() updateLobbyDto: UpdateLobbyDto) {
     return this.lobbyService.updateLobby(id, updateLobbyDto);
