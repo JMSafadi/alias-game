@@ -6,6 +6,7 @@ import { StartTurnDto } from '../dto/start-turn.dto';
 import { TeamService } from './team.service';
 import { WordService } from './words.service';
 import { LobbyService } from '../../lobby/lobby.service';
+import { UsersService } from 'src/users/users.service';
 
 interface StartNextTurnResponse {
   gameOver: boolean;
@@ -20,6 +21,7 @@ export class TurnService {
     private readonly teamService: TeamService,
     private readonly wordService: WordService,
     private readonly lobbyService: LobbyService,
+    private readonly userService: UsersService,
   ) {}
 
   async startTurn(startTurnDto: StartTurnDto): Promise<Game> {
@@ -34,7 +36,7 @@ export class TurnService {
     if (!lobby) {
       throw new NotFoundException('Lobby not found');
     }
-
+    console.log('lobby in turn service: ', lobby);
     // Find team playing
     const currentTeam = lobby.teams.find(
       (team) => team.teamName === startTurnDto.teamName,
@@ -42,16 +44,17 @@ export class TurnService {
     if (!currentTeam) {
       throw new NotFoundException('Team not found');
     }
-
+    console.log('currentTeam; ', currentTeam.players);
     // Assign describer role randomly
-    const describer = this.assignDescriber(
-      currentTeam.players.map((player) => player.trim()),
+    const { describer, guessers } = await this.assignDescriberAndGuessers(
+      currentTeam.players,
     );
-
+    console.log('describers: ', describer);
+    console.log('guessers: ', guessers);
     // Determine guessers - wszyscy gracze w drużynie oprócz describera
-    const guessers = currentTeam.players
-      .map((player) => player.trim())
-      .filter((player) => player !== describer);
+    // const guessers = currentTeam.players
+    // .map((player) => player.trim())
+    // .filter((player) => player !== describer);
 
     // Update first round
     if (game.currentRound === 0 && game.playingTurn === 0) {
@@ -126,13 +129,15 @@ export class TurnService {
     if (!currentTeam) {
       throw new NotFoundException('Team not found');
     }
-
-    const describer = this.assignDescriber(currentTeam.players);
+    console.log('currentTeam; ', currentTeam.players);
+    const { describer, guessers } = await this.assignDescriberAndGuessers(
+      currentTeam.players,
+    );
 
     // Determine guessers - wszyscy gracze w drużynie oprócz describera
-    const guessers = currentTeam.players.filter(
-      (player) => player !== describer,
-    );
+    // const { describer, guessers } = currentTeam.players.filter(
+    // (player) => player !== describer,
+    // );
 
     // Set next turn
     game.currentTurn = {
@@ -146,10 +151,18 @@ export class TurnService {
     await game.save();
     return { gameOver: false, game };
   }
-
-  private assignDescriber(players: string[]): string {
-    const trimmedPlayers = players.map((player) => player.trim());
-    const randomIndex = Math.floor(Math.random() * trimmedPlayers.length);
-    return trimmedPlayers[randomIndex];
+  // Assign one describer randomly
+  private async assignDescriberAndGuessers(
+    playerIds: string[],
+  ): Promise<{ describer: string; guessers: string[] }> {
+    // User user service to get usernames
+    const playerUsernames = await this.userService.getUsernamesByIds(playerIds);
+    const randomIndex = Math.floor(Math.random() * playerUsernames.length);
+    const describer = playerUsernames[randomIndex];
+    const guessers = playerUsernames.filter((player) => player !== describer);
+    return {
+      describer,
+      guessers,
+    };
   }
 }

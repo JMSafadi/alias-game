@@ -260,6 +260,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const game = await this.gameService.startGameFromLobby(lobby);
 
       console.log(`Game started for lobby ${game.lobbyId}`);
+      console.log('First turn: ', game);
 
       // Emitujemy event o rozpoczęciu gry do wszystkich graczy w pokoju lobby
       this.server.to(`lobby_${game.lobbyId}`).emit('game_started', {

@@ -51,6 +51,7 @@ export class LobbyService {
         maxPlayers: lobbyObject.maxPlayers,
         currentPlayers: lobbyObject.currentPlayers,
         players: lobbyObject.players.map((player) => ({
+          // username: userMap.get(player.userId.toString()),
           username: userMap.get(player.userId.toString()),
           userId: player.userId,
         })),

@@ -39,4 +39,8 @@ export class UsersService {
     }
     return { message: `User with ID ${id} deleted successfully.` };
   }
+  async getUsernamesByIds(userIds: string[]): Promise<string[]> {
+    const users = await this.userModel.find({ _id: { $in: userIds } });
+    return users.map((user) => user.username);
+  }
 }

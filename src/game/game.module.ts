@@ -13,6 +13,8 @@ import { TurnService } from './services/turn.service';
 import { WordService } from './services/words.service';
 import { SimilarityService } from 'src/utils/similarity.service';
 import { AuthModule } from 'src/auth/auth.module';
+import { UsersService } from '../users/users.service';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { AuthModule } from 'src/auth/auth.module';
       { name: Message.name, schema: MessageSchema },
     ]),
     LobbyModule,
+    UsersModule,
     AuthModule,
   ],
   providers: [
@@ -33,6 +36,7 @@ import { AuthModule } from 'src/auth/auth.module';
     TurnService,
     WordService,
     SimilarityService,
+    UsersService,
   ],
 })
 export class GameModule {}
