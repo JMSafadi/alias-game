@@ -11,15 +11,12 @@ export class SimilarityService {
   private calculateLexicalSimilarity(word: string, guess: string): number {
     const normalizedWord = this.normalizeString(word);
     const normalizedGuess = this.normalizeString(guess);
-    console.log('Comparando ', normalizedWord, 'con ', normalizedGuess);
     const distance = natural.LevenshteinDistance(
       normalizedWord,
       normalizedGuess,
     );
     const maxLen = Math.max(normalizedWord.length, normalizedGuess.length);
     const similarity = ((maxLen - distance) / maxLen) * 100;
-    console.log('Distancia de Levenshetein, ', distance);
-    console.log('Similitud lexica: ', similarity);
     return similarity;
   }
   // Calculate phonetic similarity with Metaphone
@@ -29,9 +26,7 @@ export class SimilarityService {
     const normalizedGuess = this.normalizeString(guess);
     const soundex1 = metaphone.process(normalizedWord);
     const soundex2 = metaphone.process(normalizedGuess);
-    console.log('soundex: ', soundex1, soundex2);
     const result = metaphone.compare(soundex1, soundex2);
-    console.log('phonetic similarity is: ', result);
     return result;
   }
   // Calculate overall simlairity for one word
@@ -42,7 +37,6 @@ export class SimilarityService {
     }
     // If there isn't phonetic similitary, calculate lexical
     const lexicalSimilarity = this.calculateLexicalSimilarity(word, guess);
-    console.log('overall similarity: ', lexicalSimilarity);
     return lexicalSimilarity;
   }
   // Calculate similarity for multiple words string message
@@ -64,7 +58,7 @@ export class SimilarityService {
     const normalizedGuess = this.normalizeString(guess);
     const result =
       this.calculateOverallSimilarity(normalizedWord, normalizedGuess) === 100;
-    // console.log('Is guess correct? ', result);
+    console.log('Check guess is: ', result);
     return result;
   }
 }

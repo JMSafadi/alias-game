@@ -1,8 +1,6 @@
 import {
   BadRequestException,
   ForbiddenException,
-  forwardRef,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -13,7 +11,6 @@ import mongoose, { Model } from 'mongoose';
 import { Game } from '../schemas/Game.schema';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { LobbyService } from '../../lobby/lobby.service';
-// import { Lobby } from 'src/schemas/Lobby.schema';
 
 interface CheckWordGuessResponse {
   correct: boolean;
@@ -55,10 +52,6 @@ export class GameService {
       );
     }
 
-    console.log('Lobby teams in startGameFromLobby:', lobby.teams);
-    // lobby.teams.forEach((team, index) => {
-    //   console.log(`Team ${index + 1}:`, team);
-    // });
     const newGame = new this.gameModel({
       lobbyId: lobby.lobbyId.toString(),
       currentRound: 1,
@@ -139,18 +132,9 @@ export class GameService {
 
       // Calculate the score with the remaining time
       const score = this.scoreService.calculateScore(game, elapsedTime);
-
-      // Add points to the team, save the game state
-      // await this.scoreService.updateTeamScore(
-      //   lobby.lobbyId.toString(),
-      //   gameId,
-      //   senderTeamName,
-      //   score,
-      // );
-
       if (team) {
         team.score = (team.score || 0) + score;
-        console.log('score updated: ', score);
+        console.log(`${team.teamName} won ${score} points`);
       } else {
         throw new NotFoundException('Team not found');
       }

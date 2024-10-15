@@ -36,7 +36,6 @@ export class TurnService {
     if (!lobby) {
       throw new NotFoundException('Lobby not found');
     }
-    console.log('lobby in turn service: ', lobby);
     // Find team playing
     const currentTeam = lobby.teams.find(
       (team) => team.teamName === startTurnDto.teamName,
@@ -44,18 +43,10 @@ export class TurnService {
     if (!currentTeam) {
       throw new NotFoundException('Team not found');
     }
-    console.log('currentTeam; ', currentTeam.players);
     // Assign describer role randomly
     const { describer, guessers } = await this.assignDescriberAndGuessers(
       currentTeam.players,
     );
-    console.log('describers: ', describer);
-    console.log('guessers: ', guessers);
-    // Determine guessers - wszyscy gracze w drużynie oprócz describera
-    // const guessers = currentTeam.players
-    // .map((player) => player.trim())
-    // .filter((player) => player !== describer);
-
     // Update first round
     if (game.currentRound === 0 && game.playingTurn === 0) {
       game.currentRound++;
@@ -70,13 +61,14 @@ export class TurnService {
       guessers, // Przypisanie guessers do currentTurn
       isTurnActive: true,
     };
-
     // Save turn init time to calculate score
     game.currentTurnStartTime = Date.now();
+
+    console.log('start turn: ', game);
     await game.save();
     return game;
   }
-
+  // End turn function
   async endTurn(gameId: string): Promise<Game> {
     const game = await this.gameModel.findById(gameId);
     if (!game) {
@@ -87,19 +79,16 @@ export class TurnService {
     await game.save();
     return game;
   }
-
   async startNextTurn(gameId: string): Promise<StartNextTurnResponse> {
     const game = await this.gameModel.findById(gameId);
     if (!game) {
       throw new NotFoundException('Game not found');
     }
-
     // Pobierz informacje o lobby
     const lobby = await this.lobbyService.getLobbyById(game.lobbyId);
     if (!lobby) {
       throw new NotFoundException('Lobby not found');
     }
-
     // Verify and end game
     if (
       game.currentRound === game.rounds &&
@@ -129,16 +118,9 @@ export class TurnService {
     if (!currentTeam) {
       throw new NotFoundException('Team not found');
     }
-    console.log('currentTeam; ', currentTeam.players);
     const { describer, guessers } = await this.assignDescriberAndGuessers(
       currentTeam.players,
     );
-
-    // Determine guessers - wszyscy gracze w drużynie oprócz describera
-    // const { describer, guessers } = currentTeam.players.filter(
-    // (player) => player !== describer,
-    // );
-
     // Set next turn
     game.currentTurn = {
       teamName: nextTeam,

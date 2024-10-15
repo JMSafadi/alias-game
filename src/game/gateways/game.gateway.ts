@@ -1,4 +1,3 @@
-import { ScoreService } from './../services/score.service';
 import {
   ConnectedSocket,
   MessageBody,
@@ -33,7 +32,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly timerService: TimerService,
     private readonly messageService: MessageService,
     private readonly similarityService: SimilarityService,
-    // private readonly scoreService: ScoreService,
   ) {}
 
   async handleConnection(client: Socket): Promise<void> {
@@ -236,8 +234,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      console.log(`Lobby found: ${lobbyId}`);
-
       // Sprawdzenie, czy drużyny są poprawnie przypisane
       if (
         !lobby.teams ||
@@ -255,19 +251,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
         return;
       }
-
       // Uruchamiamy grę na podstawie danych lobby
       const game = await this.gameService.startGameFromLobby(lobby);
-
-      console.log(`Game started for lobby ${game.lobbyId}`);
-      console.log('First turn: ', game);
-
       // Emitujemy event o rozpoczęciu gry do wszystkich graczy w pokoju lobby
       this.server.to(`lobby_${game.lobbyId}`).emit('game_started', {
         message: 'Game started!',
         game,
       });
-
       // Inicjalizujemy pierwszą turę
       const updatedGame = await this.turnService.startTurn({
         gameId: game._id.toString(),
@@ -293,7 +283,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('error', { message: 'Failed to start game' });
     }
   }
-
   // Updated startTurnTimer to accept lobbyId
   private startTurnTimer(game: Game, lobbyId: string): void {
     this.timerService.startTimer(
@@ -350,7 +339,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
     );
   }
-
   // Method to check user permissions
   private hasPermissionToSendMessage(
     role: string,
