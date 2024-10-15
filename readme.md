@@ -87,7 +87,7 @@ Once you have set your environment variables, you can start the application with
 
 Make sure to keep your `.env` file private and not share it in version control. The `.env` file is listed in `.gitignore` to prevent it from being tracked by Git.
 
-## API
+## API documentation
 The project also includes documented API using Swagger. This allows developers to explore and test endopoint directly from the Swagger UI, providing an interface for understandin the API's funcionality.  
 Visit locally: http://localhost:3000/api
   
@@ -571,105 +571,51 @@ assigned.
 
 ### 4. Endpoint /chat
 
-Route that handles all chat functionalities within the game, allowing players to send messages and retrieve chat history in real-time.
+Route that retrieves chat history within the game.
 
-#### `POST` - `/chat/send`
+#### `GET` - `/chat/history`
 
-- Sends a message in the game lobby.
+- Retrieves the chat history for the entire game session.
 
 **Request:**
 
 ```bash
-curl -X 'POST' '/chat/send' 
--d 
-{
-  "lobbyId": "123",
-  "username": "John Doe",
-  "message": "Let's start the game!"
-}
+curl -X 'GET' '/chat/history'
 ```
 
 **Response:**
 
 ```json
-{
-  "message": "Message sent successfully",
-  "timestamp": "2024-09-27T15:00:00Z"
-}
-```
-
-#### `GET` - `/chat`
-
-- Retrieves the chat history for a specific lobby.
-
-**Request:**
-
-```bash
-curl -X 'GET' '/chat?lobbyId=123'
-```
-
-**Response:**
-
-```json
-{
-  "messages": [
-    {
-      "username": "John Doe",
-      "message": "Let's start the game!",
-      "timestamp": "2024-09-27T15:00:00Z"
+[
+   {
+        "_id": "670e83898d1fab6fac166e0e",
+        "content": "Message from Marlena",
+        "sender": "670e28947bb788a7dd5a3d41",
+        "messageType": "chat",
+        "senderTeamName": "Team A",
+        "role": "chat",
+        "lobbyId": "670e828e8d1fab6fac166db0",
+        "timestamp": "2024-10-10T10:10:00.000Z",
+        "__v": 0
     },
     {
-      "username": "Jane Doe",
-      "message": "Ready to play!",
-      "timestamp": "2024-09-27T15:01:00Z"
+        "_id": "670e83978d1fab6fac166e1a",
+        "content": "Message from Ignacio",
+        "sender": "670e28987bb788a7dd5a3d43",
+        "messageType": "chat",
+        "senderTeamName": "Team A",
+        "role": "chat",
+        "lobbyId": "670e828e8d1fab6fac166db0",
+        "timestamp": "2024-10-10T10:10:00.000Z",
+        "__v": 0
     }
-  ]
-}
+]
 ```
 
-### 5. Endpoint /words
+Error Responses:
 
-Route that manages word validation and retrieves similar words to enhance gameplay and prevent obvious clues.
-
-#### `POST` - `/words/validate`
-
-- Validates if the guessed word is correct.
-
-**Request:**
-
-```bash
-curl -X 'POST' '/words/validate' 
--d 
-{
-  "word": "rabbit"
-}
 ```
-
-**Response:**
-
-```json
-{
-  "valid": true,
-  "message": "The word is valid."
-}
-```
-
-#### `GET` - `/words/similar`
-
-- Retrieves a list of similar words that cannot be used by describers.
-
-**Request:**
-
-```bash
-curl -X 'GET' '/words/similar?word=rabbit'
-```
-
-**Response:**
-
-```json
-{
-  "similarWords": ["bunny", "hare", "lagomorph"]
-}
+500 Internal server error. Failed to retrieve chat history.
 ```
 
 ## Socket Events
