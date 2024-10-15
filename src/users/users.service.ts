@@ -133,4 +133,8 @@ export class UsersService {
     newUser.password = await bcrypt.hash(userData.password, 10);
     return await newUser.save();
   }
+  async getUsernamesByIds(userIds: string[]): Promise<string[]> {
+    const users = await this.userModel.find({ _id: { $in: userIds } });
+    return users.map((user) => user.username);
+  }
 }

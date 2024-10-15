@@ -14,11 +14,17 @@ import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
+  private jwtService: JwtService;
   constructor(
     @InjectModel(User.name)
     private userModel: Model<User>,
-    private jwtService: JwtService,
-  ) { }
+  ) {
+    // Inicjalizacja JwtService z odpowiednią konfiguracją
+    this.jwtService = new JwtService({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '24h' },
+    });
+  }
 
   async signUp(signUpDto: SignUpDto): Promise<{ message: string }> {
     const { email, username, password } = signUpDto;

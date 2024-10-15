@@ -96,6 +96,8 @@ describe('LobbyController', () => {
             const createLobbyDto: CreateLobbyDto = {
                 userId: "validID",
                 playersPerTeam: 3,
+                rounds: 5,
+                timePerTurn: 60, 
             };
 
             const mockCreatedLobby = {
@@ -114,6 +116,8 @@ describe('LobbyController', () => {
             const createLobbyDto: CreateLobbyDto = {
                 userId: "notValidID",
                 playersPerTeam: 3,
+                rounds: 5,
+                timePerTurn: 60, 
             };
 
             lobbyService.createLobby = jest.fn().mockRejectedValue(new BadRequestException('Invalid lobby data')); //Mock invalid data.

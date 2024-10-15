@@ -16,7 +16,7 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['.eslintrc.js'],
+  ignorePatterns: ['.eslintrc.js', 'game.js'],
   rules: {
     '@typescript-eslint/explicit-function-return-type': 'warn',
     '@typescript-eslint/no-explicit-any': 'error',

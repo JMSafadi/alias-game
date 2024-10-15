@@ -1,5 +1,21 @@
-import { Body, Controller, Get, Post, Delete, Param, UseGuards, Put } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  UseGuards,
+  Put,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { LobbyService } from './lobby.service';
 import { CreateLobbyDto } from './dto/CreateLobby.dto';
 import { UpdateLobbyDto } from './dto/UpdateLobby.dto';
@@ -15,7 +31,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @ApiBearerAuth()
 @Controller('lobby')
 export class LobbyController {
-  constructor(private lobbyService: LobbyService) { }
+  constructor(private lobbyService: LobbyService) {}
 
   /**
    * Route to fetch all lobbies.
@@ -51,10 +67,12 @@ export class LobbyController {
     description: 'Invalid input data.',
   })
   @Put(':id')
-  async updateLobby(@Param('id') id: string, @Body() updateLobbyDto: UpdateLobbyDto) {
+  async updateLobby(
+    @Param('id') id: string,
+    @Body() updateLobbyDto: UpdateLobbyDto,
+  ) {
     return this.lobbyService.updateLobby(id, updateLobbyDto);
   }
-
   /**
    * Route to fetch a specific lobby by ID.
    * @param id The lobby ID.
@@ -79,10 +97,17 @@ export class LobbyController {
    * @param createLobbyDto The data to create a new lobby.
    */
   @ApiOperation({ summary: 'Create a new lobby' })
-  @ApiBody({ type: CreateLobbyDto })
+  @ApiBody({
+    type: CreateLobbyDto,
+    description: 'Data to create a lobby, including rounds and time per turn.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Lobby created successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data.',
   })
   @Post('create')
   createLobby(@Body() createLobbyDto: CreateLobbyDto) {

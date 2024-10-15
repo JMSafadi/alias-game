@@ -4,86 +4,190 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Alias Game</title>
+    <!-- Bulma CSS -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css"
     />
+    <!-- Font Awesome for Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <!-- Socket.io -->
     <script
       src="https://cdn.socket.io/4.3.2/socket.io.min.js"
       integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs"
       crossorigin="anonymous"
     ></script>
-    <script>
-      // Initialize single socket connection with '/game' namespace
-      const socket = io('http://localhost:3000/game');
-
-      // Socket events
-      socket.on('connect', function () {
-        console.log('Connected to GameGateway');
-      });
-
-      socket.on('receive_message', function (data) {
-        console.log('Received message:', data);
-        const messagesDiv = document.getElementById('messages');
-        const newMessage = document.createElement('div');
-        newMessage.textContent = `${data.sender}: ${data.content}`;
-        messagesDiv.appendChild(newMessage);
-      });
-
-      socket.on('turnStarted', function (data) {
-        console.log('Turn started:', data);
-        document.getElementById('wordToGuess').textContent =
-          `Word to guess: ${data.wordToGuess}`;
-      });
-
-      socket.on('gameEnded', function (data) {
-        console.log('Game Ended:', data);
-        alert(data.message);
-      });
-
-      socket.on('scoreUpdated', function (data) {
-        console.log('Score updated:', data);
-        const messagesDiv = document.getElementById('messages');
-        const scoreMessage = document.createElement('div');
-        scoreMessage.textContent = `Score Update: ${data.message}`;
-        messagesDiv.appendChild(scoreMessage);
-      });
-
-      socket.on('guessFailed', function (data) {
-        console.log('Guess failed:', data);
-        const messagesDiv = document.getElementById('messages');
-        const failMessage = document.createElement('div');
-        failMessage.style.color = 'red';
-        failMessage.textContent = `Guess Failed: ${data.message}`;
-        messagesDiv.appendChild(failMessage);
-      });
-
-      function sendMessage(isGuess = false) {
-        const messageInput = document.getElementById('messageInput');
-        const message = messageInput.value;
-
-        // Determine message type: description, chat, or guess
-        let messageType = 'chat';
-        if (document.getElementById('isDescriber').checked) {
-          messageType = 'description';
-        } else if (isGuess) {
-          messageType = 'guess';
-        }
-
-        // Emit the message to the server via socket
-        socket.emit('send_message', {
-          content: message,
-          messageType: messageType,
-        });
-
-        messageInput.value = '';
-      }
-    </script>
   </head>
   <body>
+    <!-- Navbar -->
+    <nav class="navbar is-light">
+      <div class="navbar-brand">
+        <a class="navbar-item" href="#">
+          <strong>Alias Game</strong>
+        </a>
+        <a
+          role="button"
+          class="navbar-burger"
+          aria-label="menu"
+          aria-expanded="false"
+          data-target="navbarBasic"
+        >
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <div id="navbarBasic" class="navbar-menu">
+        <div class="navbar-start">
+          <!-- Additional menu items here if needed -->
+        </div>
+
+        <div class="navbar-end">
+          <div class="navbar-item">
+            <div id="userEmail" class="mr-2"></div>
+            <div class="buttons">
+              <button
+                id="registerButton"
+                class="button is-light"
+                onclick="openRegisterModal()"
+              >
+                Register
+              </button>
+              <button
+                id="loginButton"
+                class="button is-primary"
+                onclick="openLoginModal()"
+              >
+                <strong>Log In</strong>
+              </button>
+              <button
+                id="logoutButton"
+                class="button is-light"
+                onclick="logout()"
+                style="display: none"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+      <div class="modal-background" onclick="closeLoginModal()"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Login</p>
+          <button
+            class="delete"
+            aria-label="close"
+            onclick="closeLoginModal()"
+          ></button>
+        </header>
+        <section class="modal-card-body">
+          <form id="loginForm" onsubmit="event.preventDefault(); login();">
+            <div class="field">
+              <label class="label">Username</label>
+              <div class="control">
+                <input
+                  id="loginUsername"
+                  class="input"
+                  type="text"
+                  placeholder="Enter username"
+                />
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label">Password</label>
+              <div class="control">
+                <input
+                  id="loginPassword"
+                  class="input"
+                  type="password"
+                  placeholder="Enter password"
+                />
+              </div>
+            </div>
+
+            <p id="loginError" class="has-text-danger"></p>
+            <button class="button is-success" type="submit">Log In</button>
+          </form>
+        </section>
+      </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div id="registerModal" class="modal">
+      <div class="modal-background" onclick="closeRegisterModal()"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Register</p>
+          <button
+            class="delete"
+            aria-label="close"
+            onclick="closeRegisterModal()"
+          ></button>
+        </header>
+        <section class="modal-card-body">
+          <form
+            id="registerForm"
+            onsubmit="event.preventDefault(); register();"
+          >
+            <div class="field">
+              <label class="label">Username</label>
+              <div class="control">
+                <input
+                  id="registerUsername"
+                  class="input"
+                  type="text"
+                  placeholder="Enter username"
+                />
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label">Password</label>
+              <div class="control">
+                <input
+                  id="registerPassword"
+                  class="input"
+                  type="password"
+                  placeholder="Enter password"
+                />
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label">Confirm Password</label>
+              <div class="control">
+                <input
+                  id="registerConfirmPassword"
+                  class="input"
+                  type="password"
+                  placeholder="Confirm password"
+                />
+              </div>
+            </div>
+
+            <p id="registerError" class="has-text-danger"></p>
+            <button class="button is-success" type="submit">Register</button>
+          </form>
+        </section>
+      </div>
+    </div>
+
+    <!-- Main Content -->
     <div class="container mt-5">
+      <!-- The rest of your content -->
       <div class="columns">
-        <!-- Main Chat Section -->
+        <!-- Chat Section -->
         <div class="column is-two-thirds">
           <div class="box">
             <h3 class="title is-4">Chat</h3>
@@ -104,72 +208,131 @@
               placeholder="Enter message"
             />
             <div class="mt-2">
-              <input type="checkbox" id="isDescriber" />
-              <label for="isDescriber">Describer Mode</label>
+              <button class="button is-link mt-2" onclick="sendMessage()">
+                Send
+              </button>
+              <button class="button is-success mt-2 ml-2" onclick="sendGuess()">
+                Send Guess
+              </button>
             </div>
-            <button class="button is-link mt-2" onclick="sendMessage()">
-              Send
-            </button>
-            <button class="button is-warning mt-2" onclick="sendMessage(true)">
-              Guess
-            </button>
+          </div>
+
+          <!-- Game Info Section -->
+          <div class="box mt-5">
+            <h3 class="title is-4">Game Information</h3>
+            <div id="currentRound" class="has-text-weight-bold mb-3">
+              Current Round:
+            </div>
+            <div id="currentTeam" class="has-text-weight-bold mb-3">
+              Current Team:
+            </div>
+            <div id="currentDescriber" class="has-text-weight-bold mb-3">
+              Describer:
+            </div>
+            <div id="wordToGuess" class="has-text-weight-bold mb-3">
+              Word to Guess:
+            </div>
           </div>
         </div>
 
-        <!-- Setup Game Section -->
+        <!-- Game Configuration Section -->
         <div class="column">
           <div class="box">
             <h3 class="title is-4">Setup Game</h3>
+            <!-- Players per Team -->
             <div class="mb-4">
-              <label class="label">Lobby ID</label>
-              <input id="lobbyId" class="input" placeholder="Enter lobby ID" />
+              <label class="label">Players per Team</label>
+              <input
+                id="playersPerTeam"
+                class="input"
+                type="number"
+                min="1"
+                placeholder="Enter Players per Team"
+              />
             </div>
+
+            <!-- Team 1 Configuration -->
             <div class="mb-4">
               <h4 class="subtitle is-6">Team 1</h4>
               <input
                 id="team1Name"
                 class="input mb-2"
-                placeholder="Enter team 1 name"
+                placeholder="Enter Team 1 Name"
               />
               <input
                 id="team1Players"
                 class="input"
-                placeholder="Enter team 1 players (comma separated)"
+                placeholder="Enter Team 1 Players (comma separated)"
               />
             </div>
+
+            <!-- Team 2 Configuration -->
             <div class="mb-4">
               <h4 class="subtitle is-6">Team 2</h4>
               <input
                 id="team2Name"
                 class="input mb-2"
-                placeholder="Enter team 2 name"
+                placeholder="Enter Team 2 Name"
               />
               <input
                 id="team2Players"
                 class="input"
-                placeholder="Enter team 2 players (comma separated)"
+                placeholder="Enter Team 2 Players (comma separated)"
               />
             </div>
+
+            <!-- Number of Rounds -->
             <div class="mb-4">
               <label class="label">Rounds</label>
-              <input id="rounds" class="input" type="number" min="1" max="10" />
+              <input
+                id="rounds"
+                class="input"
+                type="number"
+                min="1"
+                max="10"
+                placeholder="Enter Number of Rounds"
+              />
             </div>
+
+            <!-- Time per Turn -->
             <div class="mb-4">
               <label class="label">Time per Turn (seconds)</label>
               <input
                 id="timePerTurn"
                 class="input"
                 type="number"
-                min="30"
+                min="10"
                 max="120"
+                placeholder="Enter Time per Turn"
               />
             </div>
-            <button class="button is-primary mt-4" onclick="startGame()">
+
+            <!-- Create and Join Lobby Buttons -->
+            <button class="button is-primary mt-4" onclick="createLobby()">
+              Create Lobby
+            </button>
+            <button class="button is-link mt-4" onclick="joinLobby()">
+              Join Lobby
+            </button>
+
+            <!-- Start Game Button -->
+            <button class="button is-warning mt-4" onclick="startGame()">
               Start Game
             </button>
+          </div>
+
+          <!-- Lobby Information Section -->
+          <div class="box mt-5">
+            <h3 class="title is-4">Lobby Information</h3>
+            <div id="lobbyInfo">
+              <!-- Information about the lobby, such as players and owner, will be displayed here -->
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Scripts -->
+    <script src="game.js"></script>
   </body>
 </html>

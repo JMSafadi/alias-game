@@ -3,16 +3,23 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { SignUpDto } from './dto/signup.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   @ApiOperation({ summary: 'Register as a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully.' })
-  @ApiResponse({ status: 400, description: 'Invalid input data or duplicate username/email.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data or duplicate username/email.',
+  })
   @ApiResponse({ status: 500, description: 'Unexpected server error.' })
   @Post('/signup')
   signUp(@Body() signUpDto: SignUpDto): Promise<{ message: string }> {

@@ -33,6 +33,7 @@ describe('AuthController', () => {
                 email: 'test@example.com',
                 username: 'testuser',
                 password: 'password123',
+                roles: undefined,
             };
 
             const mockSignUpResponse = { message: 'User registered successfully' };
@@ -48,6 +49,7 @@ describe('AuthController', () => {
                 email: 'test@example.com',
                 username: 'testuser',
                 password: 'password123',
+                roles: undefined,
             };
 
             const mockSignUpResponse = { message: 'User registered successfully' };
@@ -63,6 +65,7 @@ describe('AuthController', () => {
                 email: 'invalidEmail',
                 username: 'user',
                 password: 'pass',
+                roles: undefined,
             };
 
             authService.signUp = jest.fn().mockRejectedValue(new BadRequestException('Invalid signup data'));

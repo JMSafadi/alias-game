@@ -9,6 +9,7 @@ import { AdminSeedService } from './users/seeders/create-admin.seed';
  * Configures global validation, Swagger documentation, and starts the application server.
  */
 async function bootstrap() {
+  console.log('JWT_SECRET:', process.env.JWT_SECRET);
   // Create the Nest application instance using AppModule
   const app = await NestFactory.create(AppModule);
 

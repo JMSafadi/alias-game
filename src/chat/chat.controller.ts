@@ -1,8 +1,8 @@
 import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ChatService } from './services/chat.service';
-import { Message } from './schemas/message.schema';
-import { SendMessageDto } from './dto/send-message.dto';
+import { Message } from '../game/schemas/Message.schema';
+import { SendMessageDto } from '../game/dto/send-message.dto';
+import { MessageService } from '../game/services/message.service';
 
 /**
  * Controller responsible for handling chat-related HTTP requests.
@@ -10,7 +10,7 @@ import { SendMessageDto } from './dto/send-message.dto';
 @ApiTags('Chat') // This groups the endpoints under "Chat" in Swagger
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) { }
+  constructor(private readonly messageService: MessageService) {}
 
   /**
    * Handles the HTTP GET request to retrieve the chat history.
@@ -32,7 +32,7 @@ export class ChatController {
   async getChatHistory(): Promise<Message[]> {
     console.log('Handling request to get chat history');
     try {
-      const chatHistory = await this.chatService.getMessages();
+      const chatHistory = await this.messageService.getMessages();
       console.log('Chat history retrieved successfully');
       return chatHistory;
     } catch (error) {

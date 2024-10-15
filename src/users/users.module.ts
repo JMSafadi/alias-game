@@ -18,6 +18,6 @@ import { AdminSeedService } from './seeders/create-admin.seed';
   ],
   providers: [UsersService, AdminSeedService],
   controllers: [UsersController],
-  exports: [UsersService, AdminSeedService],
+  exports: [UsersService, AdminSeedService, MongooseModule],
 })
-export class UsersModule { }
+export class UsersModule {}
