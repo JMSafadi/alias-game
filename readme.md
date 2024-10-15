@@ -82,7 +82,7 @@ Make sure to keep your `.env` file private and not share it in version control. 
 
 ## API
 The project also includes documented API using Swagger. This allows developers to explore and test endopoint directly from the Swagger UI, providing an interface for understandin the API's funcionality.  
-Visit locally: http://localhost:3000/docs
+Visit locally: http://localhost:3000/api
   
 ### 1. Endpoint /auth
 #### `POST` - `/auth`
