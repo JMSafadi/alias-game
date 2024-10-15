@@ -6,7 +6,7 @@ import { StartTurnDto } from '../dto/start-turn.dto';
 import { TeamService } from './team.service';
 import { WordService } from './words.service';
 import { LobbyService } from '../../lobby/lobby.service';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '../../users/users.service';
 
 interface StartNextTurnResponse {
   gameOver: boolean;

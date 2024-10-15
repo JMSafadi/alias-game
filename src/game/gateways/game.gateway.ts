@@ -17,7 +17,7 @@ import { SendMessageDto } from '../dto/send-message.dto';
 import { TurnStartedDto } from '../dto/turn-started.dto';
 import * as jwt from 'jsonwebtoken';
 import { Game } from '../schemas/Game.schema';
-import { SimilarityService } from 'src/utils/similarity.service';
+import { SimilarityService } from '../../utils/similarity.service';
 import { NotFoundException } from '@nestjs/common';
 
 @WebSocketGateway({ namespace: '/game', cors: { origin: '*' } })
