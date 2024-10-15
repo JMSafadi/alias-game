@@ -27,7 +27,7 @@ The game concludes after a predetermined number of rounds, with the highest-scor
 1. [System Requirements](#system-requirements)
 2. [Base URL](#base-url)
 3. [Install](#install)
-4. [Set Up Enviroment](#set-up-enviroment)
+4. [Setting Up Environment Variables](#setting-up-environment-variables)
 5. [API Documentation](#api-documentation)
 6. [Socket events](#socket-events)
 7. [Database Schema](#database-schema)
@@ -619,31 +619,24 @@ Error Responses:
 ```
 
 ## Socket Events
-``startGame``  
-Client sent event to start the game once teams and players have been set up in a lobby.  
-  
+
+### `start_game`
+
+Client sends this event to start the game once teams and players have been set up in a lobby.
+
 **Payload**
 
 ```json
 {
-  "teamsInfo": [
-    {
-      "teamName": "Team A",
-      "players": ["user1", "user2"]
-    },
-    {
-      "teamName": "Team B",
-      "players": ["user3", "user4"]
-    }
-  ],
-  "rounds": 5,
-  "timePerTurn": 30
+  "lobbyId": "123"
 }
 ```
 
-`gameStarted `
+### `game_started`
 
-When start-game event is sent, server response with event game-started to init game.
+When the `start_game` event is sent, the server responds with the `game_started` event to initialize the game.
+
+**Response**
 
 ```json
 {
@@ -668,50 +661,115 @@ When start-game event is sent, server response with event game-started to init g
 }
 ```
 
-`turnStarted`  
-When game starts, automatically init the first turn for one team generating word to guess.
+### `turn_started`
+
+When the game starts, the server automatically initializes the first turn for one team, generating a word to guess.
+
+**Response**
 
 ```json
 {
-  "message": "Turn started for team: Team A",
-  "wordToGuess": "garden"
+  "message": "Turn started for team: Team A. user1 is the describer!",
+  "round": 1,
+  "turn": 1,
+  "time": 30,
+  "wordToGuess": "garden",
+  "teamName": "Team A",
+  "describer": "user1"
 }
 ```
 
-`guessWord`  
-Client sent event when the team playing the turn, try to guess the word.
+### `send_message`
 
-**Payload:**
+Client sends this event to send a chat message during the game.
+
+**Payload**
+
+```json
+{
+  "content": "This is a message from user1",
+  "sender": "user1",
+  "messageType": "chat",
+  "senderTeamName": "Team A",
+  "gameId": "6701c9c2392f862da89aa423",
+  "lobbyId": "123"
+}
+```
+
+**Response**
+
+The server emits the `receive_message` event to all clients in the lobby.
+
+```json
+{
+  "content": "This is a message from user1",
+  "sender": "user1",
+  "messageType": "chat",
+  "senderTeamName": "Team A",
+  "lobbyId": "123",
+  "timestamp": "2024-10-14T15:00:00Z"
+}
+```
+
+### `guess_word`
+
+Client sends this event when the team playing the turn tries to guess the word.
+
+**Payload**
 
 ```json
 {
   "gameId": "6701c9c2392f862da89aa423",
   "teamName": "Team A",
-  "guessWord": "sofa"
+  "content": "sofa",
+  "sender": "user2"
 }
 ```
 
-If guess is incorrect:
+If the guess is incorrect:
 
-`guessFailed`
+### `incorrect_guess`
+
+**Response**
 
 ```json
 {
-  "message": "Incorrect word! Team lost 5 points. Try again."
+  "message": "Player user2 guessed the word incorrectly.",
+  "team": "Team A"
 }
 ```
 
-If guess is correct:
+If the guess is correct:
 
-`turnEnded`
+### `correct_guess`
+
+**Response**
 
 ```json
 {
-  "message": "Correct word guessed! Turn ended"
+  "message": "Player user2 has guessed the word correctly!",
+  "team": "Team A",
+  "score": 10
 }
 ```
 
-`scoreUpdated`
+### `turn_ended`
+
+Emitted when a turn ends, either due to a timeout or a correct guess.
+
+**Response**
+
+```json
+{
+  "message": "Turn ended for Team A. The word was: garden."
+}
+```
+
+### `score_updated`
+
+Emitted when the team's score is updated.
+
+**Response**
 
 ```json
 {
@@ -721,12 +779,67 @@ If guess is correct:
 }
 ```
 
-`gameEnded`
+### `game_over`
+
+Emitted when the game ends.
+
+**Response**
 
 ```json
 {
   "message": "Game over! The winner is Team B. Congratulations!",
   "score": 12
+}
+```
+
+### `points_deducted`
+
+Emitted when points are deducted from a team for using similar or forbidden words.
+
+**Response**
+
+```json
+{
+  "message": "10 points have been deducted from Team A for using similar words.",
+  "team": "Team A",
+  "score": 5
+}
+```
+
+### `warning`
+
+Emitted when a describer uses words that are too similar to the word to be guessed.
+
+**Response**
+
+```json
+{
+  "message": "WARNING: Player user1, you can't use words that are too similar.",
+  "team": "Team A"
+}
+```
+
+### `gameEnded`
+
+Emitted when the game is over, providing the final outcome.
+
+**Response**
+
+```json
+{
+  "message": "Game over! The winner is Team B with 20 points. Congratulations!"
+}
+```
+
+### `turn_ended`
+
+Emitted when the turn ends due to timeout or another event.
+
+**Response**
+
+```json
+{
+  "message": "Turn ended for Team A. The word was 'rhinoceros'."
 }
 ```
 
