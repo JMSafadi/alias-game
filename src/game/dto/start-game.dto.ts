@@ -1,35 +1,9 @@
-import { Type } from 'class-transformer';
-import {
-  ArrayMinSize,
-  IsArray,
-  IsInt,
-  IsNotEmpty,
-  IsString,
-  Max,
-  Min,
-  ValidateNested,
-} from 'class-validator';
-
-class TeamsDto {
-  @IsString()
-  @IsNotEmpty()
-  teamName: string;
-
-  @IsArray()
-  @IsNotEmpty()
-  players: string[];
-}
+import { IsInt, IsNotEmpty, IsString, Max, Min } from 'class-validator';
 
 export class StartGameDto {
+  @IsNotEmpty({ message: 'Lobby ID is required.' })
   @IsString()
   lobbyId: string;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => TeamsDto)
-  @ArrayMinSize(2)
-  @IsNotEmpty()
-  teamsInfo: TeamsDto[];
 
   // Update min
   @IsInt()

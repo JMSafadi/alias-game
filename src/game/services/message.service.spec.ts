@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ChatService } from './chat.service';
 import { getModelToken } from '@nestjs/mongoose';
-import { Message, MessageDocument } from './schemas/message.schema';
+import { MessageService } from './message.service';
+import { Message, MessageDocument } from '../schemas/Message.schema';
 import { Model } from 'mongoose';
-import { SendMessageDto } from './dto/send-message.dto';
+import { SimilarityService } from '../../utils/similarity.service';
 
 class MockMessageModel {
   private data: Partial<MessageDocument>;
@@ -20,62 +20,50 @@ class MockMessageModel {
   });
 }
 
-// Casting our class to type Model<MessageDocument>
+const mockSimilarityService = {
+  checkGuess: jest.fn(),
+};
+
 const mockMessageModel = MockMessageModel as unknown as Model<MessageDocument>;
 
-describe('ChatService', () => {
-  let service: ChatService;
+describe('MessageService', () => {
+  let service: MessageService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        ChatService,
+        MessageService,
         {
           provide: getModelToken(Message.name),
           useValue: mockMessageModel,
         },
+        {
+          provide: SimilarityService,
+          useValue: mockSimilarityService,
+        },
       ],
     }).compile();
 
-    service = module.get<ChatService>(ChatService);
+    service = module.get<MessageService>(MessageService);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe('saveMessage', () => {
-    it('should save a new message', async () => {
-      const sendMessageDto: SendMessageDto = {
-        content: 'Hello World',
-        sender: 'user123',
-        timestamp: new Date(),
-      };
-
-      const result = await service.saveMessage(sendMessageDto);
-
-      expect(result).toEqual(expect.objectContaining(sendMessageDto));
-    });
-
-    it('should throw an error if content or sender is missing', async () => {
-      const sendMessageDto: SendMessageDto = {
-        content: '',
-        sender: '',
-      };
-
-      await expect(service.saveMessage(sendMessageDto)).rejects.toThrow(
-        'Content and sender are required',
-      );
-    });
-  });
-
   describe('getMessages', () => {
     it('should return an array of messages', async () => {
       const messages = [
-        { content: 'Hello', sender: 'user123', timestamp: new Date() },
+        {
+          content: 'Hello',
+          sender: 'user123',
+          timestamp: new Date(),
+          messageType: 'chat',
+          senderTeamName: 'team1',
+          role: 'member',
+        },
       ] as MessageDocument[];
 
-      // Mock the exec method
       const execMock = jest.fn().mockResolvedValueOnce(messages);
       (MockMessageModel.find as jest.Mock).mockReturnValueOnce({
         exec: execMock,

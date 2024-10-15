@@ -1,5 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
+
+@Schema()
+export class TeamInfo {
+  @Prop({ required: true })
+  teamName: string;
+
+  @Prop({ type: [String], required: true })
+  players: string[];
+
+  @Prop({ default: 0 })
+  score: number; // Wynik drużyny
+}
+
+export const TeamInfoSchema = SchemaFactory.createForClass(TeamInfo);
 
 @Schema()
 export class Turn {
@@ -12,33 +26,20 @@ export class Turn {
   @Prop({ required: true })
   describer: string;
 
+  @Prop({ type: [String], default: [] })
+  guessers: string[]; // Lista graczy, którzy mogą zgadywać w danym momencie
+
   @Prop({ default: false })
   isTurnActive: boolean;
 }
 
 export const TurnSchema = SchemaFactory.createForClass(Turn);
-
-@Schema()
-class Teams {
-  @Prop({ required: true })
-  teamName: string;
-
-  @Prop({ type: [String], required: true })
-  players: string[];
-
-  @Prop({ default: 0, required: true })
-  score: number;
-}
-
-export const TeamSchema = SchemaFactory.createForClass(Teams);
-
 @Schema()
 export class Game extends Document {
-  @Prop({ required: true })
-  lobbyId: string;
+  _id: Types.ObjectId;
 
-  @Prop({ type: [TeamSchema], required: true, _id: false })
-  teamsInfo: Teams[];
+  @Prop()
+  lobbyId: string;
 
   @Prop({ required: true, min: 5, max: 10 })
   rounds: number;
@@ -48,6 +49,9 @@ export class Game extends Document {
 
   @Prop({ type: TurnSchema })
   currentTurn: Turn;
+
+  @Prop({ type: [TeamInfoSchema], required: true })
+  teamsInfo: TeamInfo[];
 
   @Prop({ default: 0 })
   currentRound: number;

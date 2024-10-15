@@ -1,31 +1,19 @@
+// chat.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Message, MessageDocument } from './schemas/message.schema';
-import { SendMessageDto } from './dto/send-message.dto';
+import { Message, MessageDocument } from '../schemas/Message.schema';
+import { SendMessageDto } from '../dto/send-message.dto';
+import { SimilarityService } from '../../utils/similarity.service';
 
-/**
- * ChatService provides methods to handle chat-related operations such as saving and retrieving messages.
- */
 @Injectable()
-export class ChatService {
-  /**
-   * Creates an instance of ChatService.
-   * @param messageModel The injected Mongoose model for the `Message` schema.
-   */
+export class MessageService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
+    private readonly similarityService: SimilarityService, // Dodanie SimilarityService do weryfikacji wiadomości
   ) {}
 
-  /**
-   * Saves a new message to the database.
-   * @param sendMessageDto The data transfer object containing the content of the message.
-   * @returns A promise that resolves to the saved message.
-   */
   async saveMessage(sendMessageDto: SendMessageDto): Promise<Message> {
-    console.log('sendMessageDto:', sendMessageDto);
-
-    // Sprawdzenie obecności wymaganych pól
     if (!sendMessageDto.content || !sendMessageDto.sender) {
       console.error(
         'Content or sender is missing in the received message DTO:',
@@ -33,22 +21,31 @@ export class ChatService {
       );
       throw new Error('Content and sender are required');
     }
-
     const createdMessage = new this.messageModel({
       content: sendMessageDto.content,
       sender: sendMessageDto.sender,
       timestamp: sendMessageDto.timestamp ?? Date.now(),
+      messageType: sendMessageDto.messageType,
+      senderTeamName: sendMessageDto.senderTeamName,
+      gameId: sendMessageDto.gameId,
+      lobbyId: sendMessageDto.lobbyId,
+      role: sendMessageDto.role,
     });
 
-    console.log('createdMessage:', createdMessage);
     return createdMessage.save();
   }
 
-  /**
-   * Retrieves all messages from the database.
-   * @returns A promise that resolves to an array of messages.
-   */
   async getMessages(): Promise<Message[]> {
     return this.messageModel.find().exec();
+  }
+
+  // Nowa metoda do weryfikacji wiadomości od describera
+  verifyMessage(content: string, forbiddenWords: string[]): boolean {
+    for (const forbiddenWord of forbiddenWords) {
+      if (this.similarityService.checkGuess(content, forbiddenWord)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
