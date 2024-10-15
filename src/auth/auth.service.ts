@@ -27,7 +27,7 @@ export class AuthService {
   }
 
   async signUp(signUpDto: SignUpDto): Promise<{ message: string }> {
-    const { email, username, password, roles } = signUpDto;
+    const { email, username, password } = signUpDto;
     try {
       //Hash password.
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -36,7 +36,6 @@ export class AuthService {
         email,
         username,
         password: hashedPassword,
-        roles,
       });
 
       return {

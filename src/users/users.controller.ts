@@ -64,6 +64,23 @@ export class UsersController {
     return this.usersService.getUserById(id);
   }
 
+
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a user by ID' })
+  @ApiResponse({ status: 200, description: 'User updated successfully.' })
+  @ApiResponse({ status: 404, description: 'User not found with the provided ID.' })
+  @ApiResponse({ status: 403, description: 'Forbidden. Only admins can access this route.' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @Put(':id')
+  async updateUser(
+    @Param('id') id: string,
+    @Body() updateData: { email?: string, username?: string, password?: string, roles?: Role[] }
+  ) {
+    return this.usersService.updateUser(id, updateData);
+  }
+
   @UseGuards(RolesGuard)
   @Roles(Role.Admin)
   @ApiBearerAuth()
