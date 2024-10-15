@@ -851,13 +851,16 @@ Emitted when the turn ends due to timeout or another event.
 | `password`             |  `string`  | User password.                          |
 
 
-### Chat model
+### Message model
 | Field                | Type       | Description                                                |
 | :--------------------| :----------| :----------------------------------------------------------|
-| `content`            |  `string`  | Content of the chat.                                       |
-| `sender`             |  `string`  | Identifier of the message sender.                          |
-| `timestamp`          |  `Date`    | Timestamp when the message was sent.                       |
-
+| `content`            |  `string`  | Content of the message message.                                |
+| `sender`             |  `string`  | Identifier of the message sender.                           |
+| `messageType`        |  `string`  | Type of the message (e.g., 'chat', 'describe', 'guess').    |
+| `senderTeamName`     |  `string`  | The team name of the sender, if applicable.                 |
+| `role`               |  `string`  | Role of the sender (e.g., 'describer', 'player').           |
+| `lobbyId`            |  `string`  | Identifier of the lobby where the message was sent.         |
+| `timestamp`          |  `Date`    | Timestamp when the message was sent. Defaults to current date and time. |
 
 ### Game model
 
