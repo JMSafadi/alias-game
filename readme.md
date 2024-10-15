@@ -310,27 +310,27 @@ curl -X 'GET' '/lobby' \
 **Response:**
 
 ```json
-{
-  "lobbyID": "validID",
-  "lobbyOwner": "Player3",
-  "playersPerTeam": 2,
-  "maxPlayers": 4,
-  "currentPlayers": 4,
-  "players": [
     {
-      "username": "Player3"
-    },
-    {
-      "username": "Player11"
-    },
-    {
-      "username": "Player2"
-    },
-    {
-      "username": "Player5"
+        "lobbyID": "validID",
+        "lobbyOwner": "Player3",
+        "playersPerTeam": 2,
+        "maxPlayers": 4,
+        "currentPlayers": 4,
+        "players": [
+            {
+                "username": "Player3"
+            },
+            {
+                "username": "Player11"
+            },
+            {
+                "username": "Player2"
+            },
+            {
+                "username": "Player5"
+            }
+        ]
     }
-  ]
-}
 ```
 
 Error Responses:
@@ -393,8 +393,8 @@ Allows a user to create a new game lobby. The creator becomes the lobby owner an
 
 ```bash
 curl -X 'POST' '/lobby/create' \
--d 
-'{
+-H 'Content-Type: application/json' \
+-d '{
   "userId": "validID",
   "playersPerTeam": 2
 }'
@@ -487,8 +487,8 @@ available spots.
 
 ```bash
 curl -X 'POST' '/lobby/join' \
--d 
-'{
+-H 'Content-Type: application/json' \
+-d '{
   "userId": "validUserID",
   "lobbyId": "validLobbyID"
 }'
@@ -525,8 +525,8 @@ Request:
 
 ```bash
 curl -X 'POST' '/lobby/teams' \
--d 
-'{
+-H 'Content-Type: application/json' \
+-d '{
   "lobbyId": "validID",
   "teams": [
     {
@@ -563,6 +563,7 @@ curl -X 'POST' '/lobby/teams' \
 Error Responses:
 
 ```
+404 The specified lobby does not exist.
 404 The specified lobby does not exist.
 400 Invalid Team Assignment: Some players are missing or already
 assigned.
