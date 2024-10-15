@@ -217,7 +217,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('startGame')
+  @SubscribeMessage('start_game')
   async handleStartGame(
     @MessageBody() data: { lobbyId: string },
     @ConnectedSocket() client: Socket,

@@ -7,8 +7,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Lobby } from '../schemas/Lobby.schema';
 import { User } from '../schemas/User.schema';
-import { Lobby } from '../schemas/Lobby.schema';
-import { User } from '../schemas/User.schema';
 import { CreateLobbyDto } from './dto/CreateLobby.dto';
 import { UpdateLobbyDto } from './dto/UpdateLobby.dto';
 import { JoinLobbyDto } from './dto/JoinLobby.dto';
@@ -20,7 +18,7 @@ export class LobbyService {
   constructor(
     @InjectModel(Lobby.name) private lobbyModel: Model<Lobby>,
     @InjectModel('User') private userModel: Model<User>,
-  ) { }
+  ) {}
 
   async getAllLobbies(): Promise<any[]> {
     const lobbies = await this.lobbyModel.find().exec();
@@ -28,13 +26,11 @@ export class LobbyService {
     if (lobbies.length === 0) {
       throw new NotFoundException('No lobbies found, try creating your own!');
     }
-
     const ownerIds = lobbies.map((lobby) => lobby.ownerId); //Collect all unique ownerIds and playerIds from the lobbies.
     const playerIds = lobbies.flatMap((lobby) =>
       lobby.players.map((player) => player.userId),
     );
     const uniqueUserIds = [...new Set([...ownerIds, ...playerIds])];
-
     const users = await this.userModel
       .find({ _id: { $in: uniqueUserIds } }, 'username')
       .exec();
@@ -44,8 +40,7 @@ export class LobbyService {
     );
 
     return lobbies.map((lobby) => {
-      const lobbyObject = lobby.toObject(); //Convert to plain JS object.
-
+      const lobbyObject = lobby; //Convert to plain JS object.
       return {
         //Filter and format the data to expose.
         lobbyID: lobbyObject._id,
@@ -55,7 +50,6 @@ export class LobbyService {
         maxPlayers: lobbyObject.maxPlayers,
         currentPlayers: lobbyObject.currentPlayers,
         players: lobbyObject.players.map((player) => ({
-          // username: userMap.get(player.userId.toString()),
           username: userMap.get(player.userId.toString()),
           userId: player.userId,
         })),
@@ -67,14 +61,12 @@ export class LobbyService {
     if (!mongoose.Types.ObjectId.isValid(lobbyId)) {
       throw new BadRequestException(`Invalid lobby ID: ${lobbyId}.`);
     }
-
     // Use lean() to return a plain JavaScript object instead of a Mongoose document
     const lobby = await this.lobbyModel.findById(lobbyId).lean();
     if (!lobby) {
       throw new NotFoundException(`Lobby with ID ${lobbyId} not found.`);
     }
-
-    const lobbyObject = lobby.toObject();
+    const lobbyObject = lobby; // delete unnecesssary toObject
     const ownerId = lobbyObject.ownerId;
     const playerIds = lobbyObject.players.map((player) => player.userId);
     const userIds = [ownerId, ...playerIds];
@@ -95,7 +87,7 @@ export class LobbyService {
       playersPerTeam: lobby.playersPerTeam,
       maxPlayers: lobby.maxPlayers,
       currentPlayers: lobby.currentPlayers,
-      players: lobby.players.map(player => ({
+      players: lobby.players.map((player) => ({
         username: userMap.get(player.userId.toString()),
         userId: player.userId,
       })),
@@ -105,19 +97,15 @@ export class LobbyService {
 
   async createLobby(createLobbyDto: CreateLobbyDto): Promise<any> {
     const ownerId = createLobbyDto.userId;
-
     if (!mongoose.Types.ObjectId.isValid(ownerId)) {
       throw new BadRequestException(`Invalid User ID: ${ownerId}.`);
     }
-
     const user = await this.userModel.findById(ownerId);
-
     if (!user) {
       throw new NotFoundException(
         `User Not Found: User with ID ${createLobbyDto.userId} not found.`,
       );
     }
-
     const existingLobby = await this.lobbyModel.findOne({
       $or: [
         { ownerId: ownerId }, //Check if the user is the owner of any lobby.
@@ -137,7 +125,7 @@ export class LobbyService {
       lobbyName: `${user.username}'s Lobby`, //Set the owner of the lobby.
       playersPerTeam: playersPerTeam, //Set the number of players per team.
       maxPlayers: maxPlayers,
-      currentPlayers: 1,  //The owner is already in the lobby.
+      currentPlayers: 1, //The owner is already in the lobby.
       teamCount: 2, //Set the number of teams to 2.
       rounds: createLobbyDto.rounds,
       timePerTurn: createLobbyDto.timePerTurn,
@@ -148,7 +136,8 @@ export class LobbyService {
 
     const lobbyObject = savedLobby.toObject();
 
-    return { //Filter and format the data to expose.
+    return {
+      //Filter and format the data to expose.
       lobbyOwner: user.username,
       playersPerTeam: lobbyObject.playersPerTeam,
       maxPlayers: lobbyObject.maxPlayers,
@@ -162,7 +151,10 @@ export class LobbyService {
     };
   }
 
-  async updateLobby(lobbyId: string, updateLobbyDto: UpdateLobbyDto): Promise<any> {
+  async updateLobby(
+    lobbyId: string,
+    updateLobbyDto: UpdateLobbyDto,
+  ): Promise<any> {
     if (!mongoose.Types.ObjectId.isValid(lobbyId)) {
       throw new BadRequestException(`Invalid lobby ID: ${lobbyId}.`);
     }
@@ -174,23 +166,41 @@ export class LobbyService {
     }
 
     if (updateLobbyDto.lobbyName) {
-      const existingLobby = await this.lobbyModel.findOne({ lobbyName: updateLobbyDto.lobbyName });
-      if (existingLobby && existingLobby._id.toString() !== lobby._id.toString()) {
-        throw new BadRequestException(`Lobby name '${updateLobbyDto.lobbyName}' is already in use.`);
+      const existingLobby = await this.lobbyModel.findOne({
+        lobbyName: updateLobbyDto.lobbyName,
+      });
+      if (
+        existingLobby &&
+        existingLobby._id.toString() !== lobby._id.toString()
+      ) {
+        throw new BadRequestException(
+          `Lobby name '${updateLobbyDto.lobbyName}' is already in use.`,
+        );
       }
     }
 
     //Check if there are any changes in the data.
-    const isLobbyNameSame = updateLobbyDto.lobbyName === undefined || updateLobbyDto.lobbyName === lobby.lobbyName;
-    const isPlayersPerTeamSame = updateLobbyDto.playersPerTeam === undefined || updateLobbyDto.playersPerTeam === lobby.playersPerTeam;
+    const isLobbyNameSame =
+      updateLobbyDto.lobbyName === undefined ||
+      updateLobbyDto.lobbyName === lobby.lobbyName;
+    const isPlayersPerTeamSame =
+      updateLobbyDto.playersPerTeam === undefined ||
+      updateLobbyDto.playersPerTeam === lobby.playersPerTeam;
 
     if (isLobbyNameSame && isPlayersPerTeamSame) {
-      throw new BadRequestException("No changes detected. Lobby's information unchanged.");
+      throw new BadRequestException(
+        "No changes detected. Lobby's information unchanged.",
+      );
     }
 
     //Ensure maxPlayers (playersPerTeam *2) is not set lower than the current number of players.
-    if (updateLobbyDto.playersPerTeam && (updateLobbyDto.playersPerTeam * 2) < lobby.currentPlayers) {
-      throw new BadRequestException(`Cannot reduce players per team to ${updateLobbyDto.playersPerTeam} when there are ${lobby.currentPlayers} current players.`);
+    if (
+      updateLobbyDto.playersPerTeam &&
+      updateLobbyDto.playersPerTeam * 2 < lobby.currentPlayers
+    ) {
+      throw new BadRequestException(
+        `Cannot reduce players per team to ${updateLobbyDto.playersPerTeam} when there are ${lobby.currentPlayers} current players.`,
+      );
     }
 
     //Update lobby's infromation.
@@ -206,22 +216,6 @@ export class LobbyService {
 
     return { message: `Lobby's information updated successfully.` };
   }
-
-
-  async deleteLobbyById(lobbyId: string): Promise<{ message: string }> {
-    if (!mongoose.Types.ObjectId.isValid(lobbyId)) {
-      throw new BadRequestException(`Invalid lobby ID: ${lobbyId}.`);
-    }
-
-    const lobby = await this.lobbyModel.findByIdAndDelete(lobbyId);
-
-    if (!lobby) {
-      throw new NotFoundException(`Lobby with ID ${lobbyId} not found.`);
-    }
-
-    return { message: `Lobby with ID ${lobbyId} deleted successfully.` };
-  }
-
   async joinLobby(joinLobbyDto: JoinLobbyDto): Promise<any> {
     //Validate lobbyId.
     if (!mongoose.Types.ObjectId.isValid(joinLobbyDto.lobbyId)) {
@@ -289,7 +283,7 @@ export class LobbyService {
       playersPerTeam: lobbyObject.playersPerTeam,
       maxPlayers: lobbyObject.maxPlayers,
       currentPlayers: lobbyObject.currentPlayers,
-      players: lobbyObject.players.map(player => ({
+      players: lobbyObject.players.map((player) => ({
         username: userMap.get(player.userId.toString()),
         userId: player.userId,
       })),

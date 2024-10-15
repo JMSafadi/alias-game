@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -46,10 +47,12 @@ export class LobbyController {
   }
   //Route to update an existing lobby.
   @Put(':id')
-  async updateLobby(@Param('id') id: string, @Body() updateLobbyDto: UpdateLobbyDto) {
+  async updateLobby(
+    @Param('id') id: string,
+    @Body() updateLobbyDto: UpdateLobbyDto,
+  ) {
     return this.lobbyService.updateLobby(id, updateLobbyDto);
   }
-
   /**
    * Route to fetch a specific lobby by ID.
    * @param id The lobby ID.
