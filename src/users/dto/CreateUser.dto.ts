@@ -21,6 +21,7 @@ export class CreateUserDto {
 
   @ApiPropertyOptional({
     description: 'Roles assigned to the user (not needed for regular users)',
+    type: [String],
     enum: Role,
     examples: {
       adminExample: {
@@ -31,5 +32,5 @@ export class CreateUserDto {
   })
   @IsOptional()
   @IsString()
-  roles: Role;
+  roles: Role[];
 }

@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import { validate } from 'class-validator';
 import { UpdateUserDto } from './dto/UpdateUser.dto';
 import * as bcrypt from 'bcryptjs';
+import { Role } from '../modules/common/roles/role.enum';
 
 @Injectable()
 export class UsersService {
@@ -28,7 +29,10 @@ export class UsersService {
     return user;
   }
 
-  async updateUser(id: string, updateData: { email?: string, username?: string, password?: string }) {
+  async updateUser(
+    id: string,
+    updateData: { email?: string; username?: string; password?: string; roles?: Role[] }
+  ) {
     //Check if the ID is valid.
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid user ID: ${id}.`);
@@ -46,6 +50,8 @@ export class UsersService {
     updateUserDto.email = updateData.email ?? user.email;
     updateUserDto.username = updateData.username ?? user.username;
     updateUserDto.password = updateData.password ?? user.password;
+    updateUserDto.roles = updateData.roles ?? user.roles;
+
 
     //Perform validation on the UpdateUserDto object to enforce class-validator rules
     const validationError = await validate(updateUserDto);
@@ -65,7 +71,10 @@ export class UsersService {
       isPasswordSame = await bcrypt.compare(updateData.password, user.password);
     }
 
-    if (isEmailSame && isUsernameSame && isPasswordSame) {
+    const isRolesSame = !updateData.roles || JSON.stringify(updateData.roles) === JSON.stringify(user.roles);
+
+
+    if (isEmailSame && isUsernameSame && isPasswordSame && isRolesSame) {
       throw new BadRequestException("No changes detected. User's information unchanged.");
     }
 
@@ -95,6 +104,9 @@ export class UsersService {
     if (updateData.username) user.username = updateData.username;
     if (updateData.password) {
       user.password = await bcrypt.hash(updateData.password, 10);
+    }
+    if (updateData.roles) {
+      user.roles = updateData.roles;
     }
 
     await user.save();
