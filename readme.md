@@ -80,10 +80,14 @@ Once you have set your environment variables, you can start the application with
 
 Make sure to keep your `.env` file private and not share it in version control. The `.env` file is listed in `.gitignore`  to prevent it from being tracked by Git.
 
-## API
+## API Documentation
 ### 1. Endpoint /auth
-#### `POST` - `/auth`
-Register new player in game with name and password. Mandatory step to play.
+Route that authenticates users identities.
+
+### 1.1 Endpoint: `/auth/signup`
+#### `POST` - Register new player
+
+Register new player in game with email, username and password. Mandatory step to play.
 
 **Request:**
 ```bash
@@ -91,23 +95,174 @@ curl -X 'POST'
 '/auth'
 -d
 {
+  "email": "johnDoe@examplemail.com"
   "username": "John Doe",
-  "password": "password123"
+  "password": "securePassword"
 }
-
 ```
+
 **Response:**
 ```json
 {
-  "message": "Registered user"
+  "message": "Your registration has been successful. Now you can log in using your username: 'John Doe' or email: 'johnDoe@examplemail.com'."
 }
 ```
 
-### 2. Endpoint /lobby
+Error Responses:
+
+```
+400 The username 'takenUsername' is already taken. Please choose another one.
+400 The email 'takenEmail' is already in use. Please use another one.
+400 Please provide a valid email address.
+400 Username must be at least 4 characters long.
+400 Password must be at least 6 characters long.
+400 This field is required.
+```
+
+### 1.2 Endpoint: `/auth/login`
+#### `POST` - Login
+
+Allows users with active account to login.
+
+**Request:**
+```bash
+curl -X 'POST'
+'/auth'
+-d
+{
+  "usernameOrEmail": "johnDoe@examplemail.com",
+  "password": "securePassword"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Welcome back, 'username'!"
+}
+```
+
+Error Responses:
+
+```
+401 Invalid credentials. Please verify the inputted information.
+400 Username must be at least 4 characters long.
+400 Password must be at least 6 characters long.
+400 This field is required.
+```
+
+### 2. Endpoint /users
+Route that manages users accounts.
+
+### 2.1 Endpoint: `/users`
+#### `GET` - List all existing users
+
+Shows all existing users.
+
+Request:
+```bash
+curl -X 'GET' '/users' \
+```
+
+**Response:**
+```json
+    {
+        "_id": "validId",
+        "email": "johnDoe@examplemail.com",
+        "username": "John Doe",
+        "password": "hashedPassword"
+    }
+```
+
+Error Responses:
+
+```
+404 No active Users.
+```
+
+### 2.2 Endpoint: `/users/:id`
+#### `GET` - Fetches information about the selected user
+
+Shows the information of the selected user.
+
+Request:
+```bash
+curl -X 'GET' '/users/:id' \
+```
+
+**Response:**
+```json
+    {
+        "email": "johnDoe@examplemail.com",
+        "username": "John Doe",
+        "password": "hashedPassword"
+    }
+```
+
+Error Responses:
+
+```
+404 User with ID 'missingID' not found.
+400 Invalid user ID: 'notValidID'.
+```
+
+### 2.3 Endpoint: `/users/:id`
+#### `PUT` - Updates a specific user's information
+Allows the user to update it's profile's information.
+
+Request:
+```bash
+curl -X 'PUT' '/users/validID' \
+```
+
+**Response:**
+```json
+{
+  "message": "User's information updated successfully."
+}
+```
+
+Error Responses:
+```
+404 User with ID missingUserID not found.
+400 Invalid user ID: 'notValidID'.
+400 Username must be at least 4 characters long.
+400 Password must be at least 6 characters long.
+400 This field is required.
+400 Please provide a valid email address.
+400 No changes detected. User's information unchanged.
+409 Email takenEmail is already taken.
+409 Username takenUsername is already taken
+```
+
+
+### 2.4 Endpoint: `/users/:id`
+#### `DELETE` - Delete a specific user
+Allows the deletion of a specific user by its ID.
+
+Request:
+```bash
+curl -X 'DELETE' '/users/validID' \
+```
+
+**Response:**
+```json
+{
+  "message": "User with ID validID deleted successfully."
+}
+```
+
+Error Responses:
+```
+404 User with ID missingUserID not found.
+400 Invalid user ID: 'notValidID'.
+```
+
+### 3. Endpoint /lobby
 Route that manages game rooms, allowing players to create and join rooms, and facilitating team selection. This ensures that players are appropriately grouped before the game starts.
 
-### 2.1 Endpoint: `/lobby`
-#### `GET` - List with all existing lobbies
+### 3.1 Endpoint: `/lobby`
+#### `GET` - List all existing lobbies
 
 Shows the user all existing lobbies.
 
@@ -116,39 +271,39 @@ Request:
 curl -X 'GET' '/lobby' \
 ```
 
-Response:
+**Response:**
 ```json
-{
-  "lobbyID": "validID",
-  "lobbyOwner": "Player3",
-  "playersPerTeam": 2,
-  "maxPlayers": 4,
-  "currentPlayers": 4,
-  "players": [
     {
-      "username": "Player3"
-    },
-    {
-      "username": "Player11"
-    },
-    {
-      "username": "Player2"
-    },
-    {
-      "username": "Player5"
+        "lobbyID": "validID",
+        "lobbyOwner": "Player3",
+        "playersPerTeam": 2,
+        "maxPlayers": 4,
+        "currentPlayers": 4,
+        "players": [
+            {
+                "username": "Player3"
+            },
+            {
+                "username": "Player11"
+            },
+            {
+                "username": "Player2"
+            },
+            {
+                "username": "Player5"
+            }
+        ]
     }
-  ]
-}
 ```
 
 Error Responses:
 
 ```
-404 Lobby Not Found: No lobbies found, try creating your own!.
+404 No lobbies found, try creating your own!.
 ```
 
-### 2.2 Endpoint: `/lobby/:id`
-#### `GET` - Fetch information about the selected lobby
+### 3.2 Endpoint: `/lobby/:id`
+#### `GET` - Fetches information about the selected lobby
 
 Shows the user the information of the selected lobby.
 
@@ -157,37 +312,38 @@ Request:
 curl -X GET /lobby/:id
 ```
 
-Response:
+**Response:**
 ```json
 {
-  "lobbyOwner": "Player3",
-  "playersPerTeam": 2,
-  "maxPlayers": 4,
-  "currentPlayers": 4,
-  "players": [
-    {
-        "username": "Player3"
-    },
-    {
-        "username": "Player11"
-    },
-    {
-        "username": "Player2"
-    },
-    {
-        "username": "Player5"
-    }
-  ]
+    "lobbyOwner": "Player3",
+    "playersPerTeam": 2,
+    "maxPlayers": 4,
+    "currentPlayers": 4,
+    "players": [
+        {
+            "username": "Player3"
+        },
+        {
+            "username": "Player11"
+        },
+        {
+            "username": "Player2"
+        },
+        {
+            "username": "Player5"
+        }
+    ]
 }
 ```
 
 Error Responses:
 
 ```
-404 Lobby Not Found: The specified lobby does not exist.
+404 The specified lobby does not exist.
+400 Lobby with ID notValidID not found.
 ```
 
-### 2.3 Endpoint: `/lobby/create`
+### 3.3 Endpoint: `/lobby/create`
 #### `POST` - Create a new game lobby
 
 Allows a user to create a new game lobby. The creator becomes the lobby owner and can manage settings such as the number of players and teams.
@@ -195,8 +351,8 @@ Allows a user to create a new game lobby. The creator becomes the lobby owner an
 **Request:**
 ```bash
 curl -X 'POST' '/lobby/create' \
--d 
-'{
+-H 'Content-Type: application/json' \
+-d '{
   "userId": "validID",
   "playersPerTeam": 2
 }'
@@ -213,7 +369,60 @@ curl -X 'POST' '/lobby/create' \
 }
 ```
 
-### 2.4 Endpoint: `/lobby/join`
+Error Responses:
+```
+404 User Not Found: User with ID missingId not found..
+400 Invalid User ID: 'notValidID'.
+```
+
+### 3.4 Endpoint: `/lobby/:id`
+#### `PUT` - Update a specific lobby
+Allows the user to update it's profile's information.
+
+Request:
+```bash
+curl -X 'PUT '/lobby/validID' \
+```
+
+**Response:**
+```json
+{
+  "message": "Lobby's information updated successfully."
+}
+```
+
+Error Responses:
+```
+404 Lobby with ID missingLobbyID not found.
+400 Invalid Lobby ID: 'notValidID'.
+400 Lobby name takenLobbyName is already in use.
+400 Cannot reduce players per team to 2 when there are 6 current players.
+400 No changes detected. Lobby's information unchanged.
+```
+
+### 3.5 Endpoint: `/lobby/:id`
+#### `DELETE` - Delete a specific lobby
+Allows the deletion of a specific lobby by its ID.
+
+Request:
+```bash
+curl -X 'DELETE' '/lobby/validID' \
+```
+
+**Response:**
+```json
+{
+  "message": "Lobby with ID validID deleted successfully."
+}
+```
+
+Error Responses:
+```
+404 Lobby with ID missingLobbyID not found.
+400 Invalid Lobby ID: 'notValidID'.
+```
+
+### 3.6 Endpoint: `/lobby/join`
 #### `POST` - Join an existing game lobby
 Allows a player to join a specified lobby, given that the lobby isn't full. Players will be added to teams automatically based on
 available spots.
@@ -221,8 +430,8 @@ available spots.
 **Request:**
 ```bash
 curl -X 'POST' '/lobby/join' \
--d 
-'{
+-H 'Content-Type: application/json' \
+-d '{
   "userId": "validUserID",
   "lobbyId": "validLobbyID"
 }'
@@ -240,24 +449,23 @@ curl -X 'POST' '/lobby/join' \
 Error Responses:
 
 ```
-404 Lobby Not Found: Lobby with ID notValidID not found.
+404 Lobby with ID notValidID not found.
 400 Lobby Full: The lobby has reached its player capacity.
 400 Lobby Full: User is already in another lobby.
 400 Lobby Full: User is already in the lobby.
 400 userId must be a string.
 400 lobbyId must be a string.
-
 ```
 
-### 2.5 Endpoint: `/lobby/teams`
+### 3.7 Endpoint: `/lobby/teams`
 #### `POST` - Assign players to teams
 Assigns players to teams in the lobby before the game starts.
 
 Request:
 ```bash
 curl -X 'POST' '/lobby/teams' \
--d 
-'{
+-H 'Content-Type: application/json' \
+-d '{
   "lobbyId": "validID",
   "teams": [
     {
@@ -292,7 +500,7 @@ curl -X 'POST' '/lobby/teams' \
 
 Error Responses:
 ```
-404 Lobby Not Found: The specified lobby does not exist.
+404 The specified lobby does not exist.
 400 Invalid Team Assignment: Some players are missing or already
 assigned.
 ```
