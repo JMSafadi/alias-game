@@ -16,12 +16,15 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['.eslintrc.js'],
+  ignorePatterns: ['.eslintrc.js', 'game.js'],
   rules: {
     '@typescript-eslint/explicit-function-return-type': 'warn',
     '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
-    'no-unused-vars': 'warn',
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+    ],
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
     'jest/consistent-test-it': ['error', { fn: 'it' }],
